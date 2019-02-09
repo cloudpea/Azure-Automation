@@ -3,7 +3,7 @@
   [string]$subcriptionId
 )
 Write-Output ""
-Write-Output "ANS - Tag Associated VM Resources"
+Write-Output "Tag Associated Azure VM Resources"
 Write-Output "Version - 1.0.0"
 Write-Output "Author - Ryan Froggatt (CloudPea)"
 Write-Output ""
