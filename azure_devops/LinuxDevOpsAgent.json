@@ -1,0 +1,344 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationTag": {
+            "type": "string",
+            "metadata": { "description": "Application that the resources are classified under." },
+            "defaultValue": "Devops Agent"
+        },
+        "environmentTag": {
+            "type": "string",
+            "metadata": { "description": "Environment that the resources are classified under." },
+            "defaultValue": "Production"
+        },
+        "criticalityTag": {
+            "type": "string",
+            "metadata": { "description": "Criticality that the resources are classified under." },
+            "defaultValue": "Tier 2"
+        },
+        "vmPlatform": {
+            "type": "string",
+            "metadata": { "description": "The OS on the VM" },
+            "allowedValues": [ "Linux", "Windows" ],
+            "defaultValue": "Linux"
+        },
+        "vmName": {
+            "type": "string",
+            "metadata": { "description": "The name of the virtual machines that will be created." }
+        },
+        "vmCount": {
+            "type": "int",
+            "metadata": { "description": "The number of virtual machines that will be created." },
+            "defaultValue": 1
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": { "description": "The name of the Administrator of the virtual machine." },
+            "defaultValue": "ansadmin"
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": { "description": "The password used for the administrator account." }
+        },
+        "vmSize": {
+            "type": "string",
+            "metadata": { "description": "The size of the VM." },
+            "defaultValue": "Standard_D2s_v3"
+        },
+        "vstsAccount": {
+            "type": "string",
+            "metadata": { "description": "The VSTS account name." },
+            "defaultValue": "ans-devops"
+        },
+        "vstsPoolName": {
+            "type": "string",
+            "metadata": { "description": "The name of the VSTS pool agents will join." }
+        },
+        "vstsPersonalAccessToken": {
+            "type": "securestring",
+            "metadata": { "description": "The Personal Access Token used to join the VSTS pool." }
+        },
+        "vmVnetNeedCreating": {
+            "type": "bool",
+            "metadata": { "description": "Does the Vnet need creating?" },
+            "defaultValue": true
+        },
+        "vmVnetRG": {
+            "type": "string",
+            "metadata": { "description": "The vNet's Resource Group this VM will belong to - only if vmVnetNeedCreating is false." },
+            "defaultValue": "[resourceGroup().name]"
+        },
+        "vmVnetName": {
+            "type": "string",
+            "metadata": { "description": "The vNet this VM will belong to." },
+            "defaultValue": "DevopsVnet"
+        },
+        "vmSubnetName": {
+            "type": "string",
+            "metadata": { "description": "The Subnet this VM will belong to." },
+            "defaultValue": "default"
+        },
+        "vmVnetPrefix": {
+            "type": "string",
+            "metadata": { "description": "The vmVnet CIDR range - only if vmVnetNeedCreating is true." },
+            "defaultValue": "172.31.255.0/24"
+        },
+        "vmSubnetPrefix": {
+            "type": "string",
+            "metadata": { "description": "The vmSubnet CIDR range - only if vmVnetNeedCreating is true." },
+            "defaultValue": "172.31.255.0/28"
+        }
+    },
+    "variables": {
+        "singleQuote": "'",
+        "avSet": "[concat('AV-', parameters('vmName'))]",
+        "scripts": {
+            "linux": {
+                "name": "LinuxDevOpsAgent.sh",
+                "url": "https://raw.githubusercontent.com/cloudpea/Azure-Automation/master/azure_devops/"
+            },
+            "windows": {
+                "name": "vsts-agent-win-x64-2.141.1.zip",
+                "url": "https://vstsagentpackage.azureedge.net/agent/2.141.1/"
+            }
+        },
+        "bash": {
+            "scriptUrl": "[concat(variables('scripts').linux.url, variables('scripts').linux.name)]",
+            "parameters": "[concat(parameters('vstsPersonalAccessToken'), ' ', parameters('vstsPoolName'), ' ', parameters('adminUsername'))]"
+        },
+        "powershell": {
+            "scriptUrl": "[concat(variables('scripts').windows.url, variables('scripts').windows.name)]",
+            "azureRmVersion": "6.9.0",
+            "nodeInstall": "node-v10.14.2-x64.msi",
+            "azcliInstall": "azure-cli-2.0.52.msi",
+            "parameters": "[concat('--unattended --acceptTeeEula --runAsService --auth pat --agent $Env:ComputerName --url https://dev.azure.com/', parameters('vstsAccount'), ' --token ', parameters('vstsPersonalAccessToken'), ' --pool ', parameters('vstsPoolName'))]"
+        },
+        "linuxProfile": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "18.04-LTS"
+        },
+        "windowsProfile": {
+            "publisher": "MicrosoftVisualStudio",
+            "offer": "VisualStudio",
+            "sku": "VS-2017-Ent-WS2016"
+        }
+    },
+    "resources": [
+        {
+            "name": "[concat('AV-', parameters('vmName'))]",
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2018-06-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "Application": "[parameters('applicationTag')]",
+                "Owner": "ANS",
+                "Criticality": "[parameters('criticalityTag')]",
+                "Environment": "[parameters('environmentTag')]"
+            },
+            "properties": {
+                "platformUpdateDomainCount": 2,
+                "platformFaultDomainCount": 2
+            },
+            "sku": {
+                "name": "Aligned"
+            }
+        },
+        {
+            "name": "[concat('NSG-', parameters('vmName'))]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-08-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Allow_RDP_ANS",
+                        "properties": {
+                            "description": "Allow RDP from ANS Network",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "185.12.194.1/32",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Allow_SSH_ANS",
+                        "properties": {
+                            "description": "Allow SSH from ANS Network",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "185.12.194.1/32",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('vmVnetName')]",
+            "condition": "[parameters('vmVnetNeedCreating')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2018-06-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [ "[parameters('vmVnetPrefix')]" ]
+                }
+            },
+            "resources": [
+                {
+                    "name": "[parameters('vmSubnetName')]",
+                    "condition": "[parameters('vmVnetNeedCreating')]",
+                    "type": "subnets",
+                    "apiVersion": "2018-06-01",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [ "[parameters('vmVnetName')]" ],
+                    "properties": {
+                        "addressPrefix": "[parameters('vmSubnetPrefix')]"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-NIC')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2018-10-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [ 
+                "[concat('NSG-', parameters('vmName'))]", 
+                "[resourceId(parameters('vmVnetRG'), 'Microsoft.Network/virtualNetworks', parameters('vmVnetName'))]",
+                "[concat(resourceId(parameters('vmVnetRG'), 'Microsoft.Network/virtualNetworks', parameters('vmVnetName')), '/subnets/', parameters('vmSubnetName'))]"
+            ],
+            "tags": {
+                "Application": "[parameters('applicationTag')]",
+                "Owner": "ANS",
+                "Criticality": "[parameters('criticalityTag')]",
+                "Environment": "[parameters('environmentTag')]"
+            },
+            "properties": {
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat('NSG-', parameters('vmName')))]"
+                },
+                "ipConfigurations": [
+                    {
+                        "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-NIC-config')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(resourceId(parameters('vmVnetRG'), 'Microsoft.Network/virtualNetworks', parameters('vmVnetName')), '/subnets/', parameters('vmSubnetName'))]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "copy": {
+                "name": "niccopy",
+                "count": "[parameters('vmCount')]"
+            }
+        },
+        {
+            "name": "[concat(parameters('vmName'), '-', copyIndex(1))]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2018-06-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [ "niccopy", "[concat('AV-', parameters('vmName'))]" ],
+            "tags": {
+                "Application": "[parameters('applicationTag')]",
+                "Owner": "ANS",
+                "Criticality": "[parameters('criticalityTag')]",
+                "Environment": "[parameters('environmentTag')]"
+            },
+            "properties": {
+                "hardwareProfile": { "vmSize": "[parameters('vmSize')]" },
+                "availabilitySet": { "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSet'))]"},
+                "osProfile": {
+                    "computerName": "[concat(parameters('vmName'), '-', copyIndex(1))]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[if(equals(parameters('vmPlatform'), 'Linux'), variables('linuxProfile').publisher, variables('windowsProfile').publisher)]",
+                        "offer": "[if(equals(parameters('vmPlatform'), 'Linux'), variables('linuxProfile').offer, variables('windowsProfile').offer)]",
+                        "sku": "[if(equals(parameters('vmPlatform'), 'Linux'), variables('linuxProfile').sku, variables('windowsProfile').sku)]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), '-', copyIndex(1), '-NIC'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": false
+                    }
+                }
+            },
+            "resources": [
+                {
+                    "name": "DevopsExtensionLinux",
+                    "type": "extensions",
+                    "location": "[resourceGroup().location]",
+                    "apiVersion": "2018-06-01",
+                    "condition": "[equals(parameters('vmPlatform'), 'Linux')]",
+                    "dependsOn": [ "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('vmName'), '-', copyIndex(1)))]" ],
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "skipDos2Unix": false,
+                            "fileUris": [ "[variables('bash').scriptUrl]" ]
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[concat('./', variables('scripts').linux.name, ' ', variables('bash').parameters)]"
+                        }
+                    }
+                },
+                {
+                    "name": "DevopsExtensionWindows",
+                    "type": "extensions",
+                    "location": "[resourceGroup().location]",
+                    "apiVersion": "2018-06-01",
+                    "condition": "[equals(parameters('vmPlatform'), 'Windows')]",
+                    "dependsOn": [ "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('vmName'), '-', copyIndex(1)))]" ],
+                    "properties": {
+                        "publisher": "Microsoft.Compute",
+                        "type": "CustomScriptExtension",
+                        "typeHandlerVersion": "1.9",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [ "[variables('powershell').scriptUrl]", "[concat('https://nodejs.org/dist/v10.14.2/', variables('powershell').nodeInstall)]", "[concat('https://azurecliprod.azureedge.net/msi/', variables('powershell').azcliInstall)]" ]
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -Command \"& { Install-PackageProvider -Name NuGet -Force; Install-Module -Name AzureRm -AllowClobber -Force -SkipPublisherCheck -RequiredVersion ', variables('powershell').azureRmVersion, '; ./', variables('powershell').nodeInstall, ' -quiet; ./', variables('powershell').azcliInstall, ' -quiet; mkdir C:\\agent; mv ', variables('scripts').windows.name, ' C:\\agent\\; Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory(', variables('singleQuote'), 'C:\\agent\\', variables('scripts').windows.name, variables('singleQuote'), ',', variables('singleQuote'), 'C:\\agent\\', variables('singleQuote'), '); C:\\agent\\config.cmd ', variables('powershell').parameters, ' }\"')]"
+                        }
+                    }
+                }
+            ],
+            "copy": {
+                "name": "vmcopy",
+                "count": "[parameters('vmCount')]"
+            }
+        }
+    ],
+    "outputs": {
+        
+    }
+}
