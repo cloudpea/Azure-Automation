@@ -6,7 +6,7 @@ Param (
   [string]$csvPath
 )
 Write-Output ""
-Write-Output "ANS - Enable Azure HUB Licensing"
+Write-Output "Enable Azure HUB Licensing"
 Write-Output "Version - 1.0.0"
 Write-Output "Author - Ryan Froggatt (CloudPea)"
 Write-Output ""

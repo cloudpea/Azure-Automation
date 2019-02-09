@@ -7,6 +7,10 @@
             "metadata": { "description": "Application that the resources are classified under." },
             "defaultValue": "Devops Agent"
         },
+        "ownerTag": {
+            "type": "string",
+            "metadata": { "description": "Owners that the resources are classified under." }
+        },
         "environmentTag": {
             "type": "string",
             "metadata": { "description": "Environment that the resources are classified under." },
@@ -35,7 +39,7 @@
         "adminUsername": {
             "type": "string",
             "metadata": { "description": "The name of the Administrator of the virtual machine." },
-            "defaultValue": "ansadmin"
+            "defaultValue": "azure-admin"
         },
         "adminPassword": {
             "type": "securestring",
@@ -46,16 +50,20 @@
             "metadata": { "description": "The size of the VM." },
             "defaultValue": "Standard_D2s_v3"
         },
-        "vstsAccount": {
+        "corporatePIP": {
             "type": "string",
-            "metadata": { "description": "The VSTS account name." },
-            "defaultValue": "ans-devops"
+            "metadata": { "description": "Corporate IP address to allow network access." }
         },
-        "vstsPoolName": {
+        "devopsAccount": {
+            "type": "string",
+            "metadata": { "description": "The Azure DevOps Account Name." },
+            "defaultValue": "cloudpea"
+        },
+        "devopsPoolName": {
             "type": "string",
             "metadata": { "description": "The name of the VSTS pool agents will join." }
         },
-        "vstsPersonalAccessToken": {
+        "devopsPAT": {
             "type": "securestring",
             "metadata": { "description": "The Personal Access Token used to join the VSTS pool." }
         },
@@ -91,6 +99,7 @@
         }
     },
     "variables": {
+        "corporateCidr": "[concat(parameters('corporatePIP'), '/32')]",
         "singleQuote": "'",
         "avSet": "[concat('AV-', parameters('vmName'))]",
         "scripts": {
@@ -105,14 +114,14 @@
         },
         "bash": {
             "scriptUrl": "[concat(variables('scripts').linux.url, variables('scripts').linux.name)]",
-            "parameters": "[concat(parameters('vstsPersonalAccessToken'), ' ', parameters('vstsPoolName'), ' ', parameters('adminUsername'))]"
+            "parameters": "[concat(parameters('devopsPAT'), ' ', parameters('devopsPoolName'), ' ', parameters('adminUsername'))]"
         },
         "powershell": {
             "scriptUrl": "[concat(variables('scripts').windows.url, variables('scripts').windows.name)]",
             "azureRmVersion": "6.9.0",
             "nodeInstall": "node-v10.14.2-x64.msi",
             "azcliInstall": "azure-cli-2.0.52.msi",
-            "parameters": "[concat('--unattended --acceptTeeEula --runAsService --auth pat --agent $Env:ComputerName --url https://dev.azure.com/', parameters('vstsAccount'), ' --token ', parameters('vstsPersonalAccessToken'), ' --pool ', parameters('vstsPoolName'))]"
+            "parameters": "[concat('--unattended --acceptTeeEula --runAsService --auth pat --agent $Env:ComputerName --url https://dev.azure.com/', parameters('devopsAccount'), ' --token ', parameters('devopsPAT'), ' --pool ', parameters('devopsPoolName'))]"
         },
         "linuxProfile": {
             "publisher": "Canonical",
@@ -133,7 +142,7 @@
             "location": "[resourceGroup().location]",
             "tags": {
                 "Application": "[parameters('applicationTag')]",
-                "Owner": "ANS",
+                "Owner": "[parameters('ownerTag')]",
                 "Criticality": "[parameters('criticalityTag')]",
                 "Environment": "[parameters('environmentTag')]"
             },
@@ -153,13 +162,13 @@
             "properties": {
                 "securityRules": [
                     {
-                        "name": "Allow_RDP_ANS",
+                        "name": "Allow_RDP",
                         "properties": {
-                            "description": "Allow RDP from ANS Network",
+                            "description": "Allow RDP from Network",
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "destinationPortRange": "3389",
-                            "sourceAddressPrefix": "185.12.194.1/32",
+                            "sourceAddressPrefix": "[variables('corporateCidr')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 110,
@@ -167,13 +176,13 @@
                         }
                     },
                     {
-                        "name": "Allow_SSH_ANS",
+                        "name": "Allow_SSH",
                         "properties": {
-                            "description": "Allow SSH from ANS Network",
+                            "description": "Allow SSH from Network",
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "destinationPortRange": "3389",
-                            "sourceAddressPrefix": "185.12.194.1/32",
+                            "sourceAddressPrefix": "[variables('corporateCidr')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 120,
@@ -220,7 +229,7 @@
             ],
             "tags": {
                 "Application": "[parameters('applicationTag')]",
-                "Owner": "ANS",
+                "Owner": "[parameters('ownerTag')]",
                 "Criticality": "[parameters('criticalityTag')]",
                 "Environment": "[parameters('environmentTag')]"
             },
@@ -253,7 +262,7 @@
             "dependsOn": [ "niccopy", "[concat('AV-', parameters('vmName'))]" ],
             "tags": {
                 "Application": "[parameters('applicationTag')]",
-                "Owner": "ANS",
+                "Owner": "[parameters('ownerTag')]",
                 "Criticality": "[parameters('criticalityTag')]",
                 "Environment": "[parameters('environmentTag')]"
             },

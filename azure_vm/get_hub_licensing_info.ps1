@@ -3,7 +3,7 @@ Param (
   [string]$subcriptionId
 )
 Write-Output ""
-Write-Output "ANS - Azure VM Networking Info"
+Write-Output "Azure VM Networking Info"
 Write-Output "Version - 1.0.0"
 Write-Output "Author - Ryan Froggatt (CloudPea)"
 Write-Output ""

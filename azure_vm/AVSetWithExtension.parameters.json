@@ -3,13 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "vmName": {
-            "value": "VM-WE-ANS-LM-"
+            "value": "VM-PRD-NAME-"
         },
         "vmSize": {
             "value": "Standard_D1_v2"
         },
         "adminUsername": {
-            "value": "ANS-Admin"
+            "value": "azure-admin"
         },
         "adminPassword": {
             "value": ""
@@ -24,22 +24,22 @@
             "value": ""
         },
         "vnetName": {
-            "value": "small"
+            "value": ""
         },
         "subnetName": {
-            "value": "ans"
+            "value": ""
         },
         "tagApplication": {
-            "value": "RG-WE-HUB-NETWORKING"
+            "value": "App"
         },
         "tagEnvironment": {
-            "value": "VN-WE-HUB"
+            "value": "Production"
         },
         "tagOwner": {
-            "value": "SN-WE-HUB-MANAGEMENT"
+            "value": "IT"
         },
         "tagCriticality": {
-            "value": "IT"
+            "value": "Tier 1"
         }
     }
 }

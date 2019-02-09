@@ -5,7 +5,7 @@
 # Command usage: Install-LinuxVSTSAgent.sh $VSTS_AGENT_INPUT_TOKEN $VSTS_AGENT_INPUT_POOL
 
 export VSTS_DOWNLOAD_URL="https://vstsagentpackage.azureedge.net/agent/2.141.1/vsts-agent-linux-x64-2.141.1.tar.gz"
-export ORG="ans-devops"
+export ORG="cloudpea"
 export ADMINUSER=$3
 
 # Environment variables used in VSTS configuration 
