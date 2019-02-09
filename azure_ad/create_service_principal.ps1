@@ -1,14 +1,14 @@
 ﻿Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
   [string]$subcriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Display Name for the Azure AD App/Service Principal")]
   [string]$appName,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="API Key for the Service Principal")]
   [securestring]$appSecret,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure AD Role Definitation to Assign to the App")]
   [string]$roleDefinition
 )
 Write-Output ""

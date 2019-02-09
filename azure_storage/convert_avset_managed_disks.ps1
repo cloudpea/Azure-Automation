@@ -1,11 +1,11 @@
 Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
   [string]$subcriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Name of the VM Availability Set")]
   [string]$avSetName,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Resource Group Name of the VM Availability Set")]
   [securestring]$resourceGroupName
 )
 Write-Output ""

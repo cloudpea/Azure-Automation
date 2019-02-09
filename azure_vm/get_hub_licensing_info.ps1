@@ -1,5 +1,5 @@
 Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
   [string]$subcriptionId
 )
 Write-Output ""
@@ -63,7 +63,7 @@ foreach ($VM in Get-AzVm | Where-Object {$_.StorageProfile.OsDisk.OsType -eq "Wi
 
     #Write Output for VM to CSV
     """"+$VM.Name+""","""+$VM.ResourceGroupName+""","""+$VM.HardwareProfile.VmSize+""","""+$HUB+""","""+$Cores+""","""+$VM.StorageProfile.OsDisk.OsType+""","""+$Licenses+"""" | 
-    Out-File -Encoding ASCII -FilePath ".\Azure HUB Licensing.csv" -Append
+    Out-File -Encoding ASCII -FilePath ".\azure_hub_licensing.csv" -Append
 }
 
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] HUB Licensing Information Obtained Successfully!"

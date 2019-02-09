@@ -1,26 +1,26 @@
 Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
   [string]$subcriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Region Location - westeurope, ukwest")]
   [string]$location,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Prefix for Destination Availability Set")]
   [string]$prefix,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Name of the Virtual Machine to Migrate")]
   [string]$sourceVM,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Resource Group Name of the Virtual Machine to Migrate")]
   [string]$sourceResourceGroup,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Name of the Destination Virtual Network")]
   [string]$destinationVnet,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Name of the Destination Subnet")]
   [string]$destinationSubnet,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Resource Group Name of the Destination Virtual Network")]
   [string]$destinationResourceGroup,
 )
 Write-Output ""
@@ -82,7 +82,7 @@ if ($null -ne $sourceVM.AvailabilitySetReference.Id)
     $destAvSetName = ($prefix + $sourceAvSet.Name)
     while ($destAvSetName.Length -gt 15)
     {
-        $prefix = Read-Host "Destination avSet name is greater than 15 characters, please enter a different prefix"
+        $prefix = Read-Host "Destination Availbility Set name is greater than 15 characters, please enter a different prefix"
         $destAvSetName = ($prefix + $sourceAvSet.Name)
     }
     # Check if Availability Set already Exists

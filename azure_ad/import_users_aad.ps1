@@ -1,11 +1,11 @@
 ﻿Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure AD Login Username")]
   [string]$username,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure AD Login Password")]
   [securestring]$password,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Full File Path to the CSV")]
   [array]$csvPath,
 
 )

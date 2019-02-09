@@ -1,8 +1,8 @@
 ﻿Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
   [string]$subcriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="File Path to Tagging CSV")]
   [string]$csvPath
 )
 Write-Output ""

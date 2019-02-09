@@ -1,11 +1,11 @@
 ﻿Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure AD Login Username")]
   [string]$username,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure AD Login Password")]
   [securestring]$password,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Comma-Delimitted List of Azure AD Group Name")]
   [array]$groupNames,
 
 )

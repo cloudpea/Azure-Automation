@@ -1,12 +1,12 @@
 Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
   [string]$subcriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Region Location - westeurope, ukwest")]
   [string]$vnetName
 )
 Write-Output ""
-Write-Output "Azure VM Networking Info"
+Write-Output "Azure VM Virtual Network Info"
 Write-Output "Version 1.0.0"
 Write-Output "Author - Ryan Froggatt (CloudPea)"
 Write-Output ""

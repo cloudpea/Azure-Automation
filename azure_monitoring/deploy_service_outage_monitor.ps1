@@ -1,11 +1,11 @@
 ﻿Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
   [string]$subcriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Region Location - westeurope, ukwest")]
   [string]$location,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Resource Group Name")]
   [securestring]$resourceGroupName
 )
 Write-Output ""

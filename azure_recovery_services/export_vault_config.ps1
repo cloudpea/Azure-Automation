@@ -1,11 +1,11 @@
 ﻿Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
   [string]$subcriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="VM Tag to Include in CSV")]
   [string]$tagSearch1,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="VM Tag to Include in CSV")]
   [string]$tagSearch2,
 )
 Write-Output ""

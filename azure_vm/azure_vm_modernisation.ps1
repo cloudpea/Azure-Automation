@@ -1,8 +1,8 @@
 ﻿Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
   [string]$subcriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="File Path to Azure VM Modernisation Table")]
   [string]$csvPath
 )
 Write-Output ""
@@ -42,7 +42,7 @@ Write-Output ""
 $LogFile = "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Log Output from Instance Modernisation Checks..."
 
 #Import CSV
-$CSV = Import-Csv "$csvPath\azure_vm_modernisation_table.csv"
+$CSV = Import-Csv $csvPath
 
 
 #Set CSV Headers

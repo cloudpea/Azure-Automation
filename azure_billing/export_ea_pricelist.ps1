@@ -1,8 +1,8 @@
 ﻿Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Enrollment ID for Azure Enterprise Agreement")]
   [string]$enrollmentID,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="API Key for Accessing Enterprise Agreement Portal")]
   [string]$apiKey
 )
 Write-Output ""

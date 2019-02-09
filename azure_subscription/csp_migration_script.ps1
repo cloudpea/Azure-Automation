@@ -1,20 +1,20 @@
 Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="The Source Azure Subscription ID")]
   [string]$sourceSubscriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="The Destination Azure Subscription ID")]
   [string]$destinationSubscriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Name of the Resource Group to Stage the Migration")]
   [string]$stagingResourceGroup,  
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure AD Account to Validate Move Operations")]
   [string]$serviceAccountUsername,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure AD Password to Validate Move Operations")]
   [string]$serviceAccountPassword,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="File Path to Migration CSV")]
   [string]$csvFilePath
 )
 

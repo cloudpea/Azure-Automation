@@ -1,14 +1,14 @@
 ﻿Param (
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
   [string]$subcriptionId,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Azure Region Location - westeurope, ukwest")]
   [string]$location,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Name of the Recovery Services Vault")]
   [string]$vaultName,
 
-  [Parameter(Mandatory=$True)]
+  [Parameter(Mandatory=$True, HelpMessage="Resource Group Name of the Recovery Services Vault")]
   [securestring]$resourceGroupName,
 
 )

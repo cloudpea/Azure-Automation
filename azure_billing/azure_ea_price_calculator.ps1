@@ -1,4 +1,11 @@
-﻿Write-Output ""
+﻿Param (
+  [Parameter(Mandatory=$True, HelpMessage="File Path to EA Price List")]
+  [string]$eaPriceList,
+
+  [Parameter(Mandatory=$True, HelpMessage="File Path to VM Recommendations CSV")]
+  [string]$recommendationsCSV,
+)
+Write-Output ""
 Write-Output "Azure EA Price Calculator"
 Write-Output "Version - 1.0.0"
 Write-Output "Author - Ryan Froggatt (CloudPea)"
@@ -11,12 +18,9 @@ $LocationMap = @{'eastasia'='AP East'; 'southeastasia'='AP Southeast'; 'centralu
 'canadacentral'='CA Central'; 'canadaeast'='CA East'; 'uksouth'='UK South'; 'ukwest'='UK West'; 'westcentralus'='US West Central'; 'westus2'='US West 2'; `
 'koreacentral'='KR Central'; 'koreasouth'='KR South'; 'francecentral'='FR Central'; 'francesouth'='FR South'}
 
-#Import EA Price List CSV
-$EACSVPath = Read-Host "Enter the full file path to EA Price List CSV"
-$RecCSVPath = Read-Host "Enter the full file path to the recommendations CSV"
-$Output = Read-Host "Enter the full file path to output the results"
-$PriceList = Import-CSV -Path $EACSVPath
-$Recommendations = Import-CSV -Path $RecCSVPath
+#Import EA Price List & Recommendations CSV
+$PriceList = Import-CSV -Path $eaPriceList
+$Recommendations = Import-CSV -Path $recommendationsCSV
 
 
 foreach ($VM in $Recommendations) {
@@ -150,5 +154,5 @@ foreach ($VM in $Recommendations) {
 
     #Export New CSV with Savings
     $Results = $Recommendations | Format-Table
-    Out-File -FilePath $Output -Encoding ascii -InputObject $Results
+    Out-File -FilePath "./VM Cost Saving Recommendations.csv" -Encoding ascii -InputObject $Results
 }
