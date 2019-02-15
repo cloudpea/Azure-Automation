@@ -1,0 +1,64 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "keyVaultName":{
+            "type": "string",
+            "defaultValue": "KV-PRD-UKS-CLOUDPEA",
+            "metadata": {
+                "description": "The name of the Azure Key Vault."
+            }
+        },
+        "appRegClientId": {
+            "metadata": {
+                "description": "Application Registration Client ID for the AKS Cluster"
+            },
+            "type": "string"
+        },
+        "appRegObjectId": {
+            "metadata": {
+                "description": "Application Registration Object ID for the AKS Cluster"
+            },
+            "type": "securestring"
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('keyVaultName')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2018-02-14",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "family": "A",
+                    "name": "standard"
+                },
+                "accessPolicies": [
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[parameters('appRegObjectId')]",
+                        "applicationId": "[parameters('appRegClientId')]",
+                        "permissions": {
+                            "keys": [
+                                "get"
+                            ],
+                            "secrets": [
+                                "get"
+                            ],
+                            "certificates": [
+                                "get"
+                            ]
+                        }
+                    }
+                ],
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": true,
+                "enabledForTemplateDeployment": false,
+                "enableSoftDelete": true,
+                "enablePurgeProtection": true
+            }
+        }
+    ],
+    "outputs": {}
+}
