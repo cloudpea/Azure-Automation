@@ -6,18 +6,18 @@
             "type": "string",
             "defaultValue": "KV-PRD-UKS-CLOUDPEA",
             "metadata": {
-                "description": "The name of the Azure Key Vault."
+                "description": "The Name of the Azure Key Vault."
             }
         },
-        "appRegClientId": {
+        "servicePrincipalAppId": {
             "metadata": {
-                "description": "Application Registration Client ID for the AKS Cluster"
+                "description": "Service Principal Application ID."
             },
             "type": "string"
         },
-        "appRegObjectId": {
+        "servicePrincipalObjectId": {
             "metadata": {
-                "description": "Application Registration Object ID for the AKS Cluster"
+                "description": "Service Principal Object ID."
             },
             "type": "securestring"
         }
@@ -37,8 +37,8 @@
                 "accessPolicies": [
                     {
                         "tenantId": "[subscription().tenantId]",
-                        "objectId": "[parameters('appRegObjectId')]",
-                        "applicationId": "[parameters('appRegClientId')]",
+                        "objectId": "[parameters('servicePrincipalObjectId')]",
+                        "applicationId": "[parameters('servicePrincipalAppId')]",
                         "permissions": {
                             "keys": [
                                 "get"
