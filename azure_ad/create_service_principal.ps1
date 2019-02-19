@@ -3,17 +3,11 @@
   [string]$subcriptionId,
 
   [Parameter(Mandatory=$True, HelpMessage="Display Name for the Azure AD App/Service Principal")]
-  [string]$appName,
-
-  [Parameter(Mandatory=$True, HelpMessage="API Key for the Service Principal")]
-  [securestring]$appSecret,
-
-  [Parameter(Mandatory=$True, HelpMessage="Azure AD Role Definitation to Assign to the App")]
-  [string]$roleDefinition
+  [string]$appName
 )
 Write-Output ""
 Write-Output "Create Azure AD Service Principal"
-Write-Output "Version - 1.0.0"
+Write-Output "Version - 1.0.1"
 Write-Output "Author - Ryan Froggatt (CloudPea)"
 Write-Output ""
 
@@ -48,25 +42,31 @@ Write-Output ""
 "Service Principal Important Information:" | Out-File -FilePath ".\ServicePrincipal.txt"
 
 #Output Tenant ID
-$tenant = Get-AzSubscription -SubscriptionId $SubId
-"Tenant Directory ID - " + $tenant.TenantId | Out-File -Encoding Ascii -FilePath ".\ServicePrincipals.txt" -Append
+$tenant = Get-AzSubscription -SubscriptionId $subcriptionId
+"Tenant/Directory ID - " + $tenant.TenantId | Out-File -Encoding Ascii -FilePath ".\ServicePrincipal.txt" -Append
 
-#Values for the Azure AD App:
+#Create App Uri
 $appUri = "https://$appName.com"
 
+#Create App Secret Key
+$appSecret = $(-join ((48..57) + (97..122) | Get-Random -Count 44 | % {[char]$_}) | Out-String -NoNewLine) 
+"Service Principal Application Secret - " + $appSecret | Out-File -FilePath ".\ServicePrincipal.txt" -Append
+$appSecret = $($appSecret | ConvertTo-SecureString -AsPlainText -Force)
+
 # Create the Azure AD app
-$adApplication = New-AzADApplication -DisplayName $appName -HomePage $appUri -IdentifierUris $appUri -Password $appSecret
+Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Creating App Registration..."
+$adApplication = New-AzADApplication -DisplayName $appName -HomePage $appUri -IdentifierUris $appUri -Password $appSecret -EndDate 31/12/2299
 
 # Create a Service Principal for the Azure AD App
 $servicePrincipal = New-AzADServicePrincipal -ApplicationId $adApplication.ApplicationId
 
 #Sleep for 15 seconds
-SLEEP 15
-
-# Assign the RBAC role to the Service Principal
-$appRoleAssignment = New-AzRoleAssignment -RoleDefinitionName $roleDefinition -ServicePrincipalName $adApplication.ApplicationId.Guid
+sleep 15
 
 #Output Required App Information
-"Application ID - " + $servicePrincipal.ApplicationId | Out-File -FilePath ".\ServicePrincipals.txt" -Append
+"Service Principal Application ID - " + $servicePrincipal.ApplicationId | Out-File -FilePath ".\ServicePrincipal.txt" -Append
+"Enterprise Application Object ID - " + $servicePrincipal.Id | Out-File -FilePath ".\ServicePrincipal.txt" -Append
+
 
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] App Registration Completed successfully!"
+Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] IMPORTANT - Please Save Output ServicePrincipal.txt Securely!!!"
