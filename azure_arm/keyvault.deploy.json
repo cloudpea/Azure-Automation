@@ -19,8 +19,18 @@
             "metadata": {
                 "description": "Service Principal Object ID."
             },
-            "type": "securestring"
+            "type": "string"
+        },
+        "enterpriseAppObjectId": {
+            "metadata": {
+                "description": "Enterprise Application Object ID."
+            },
+            "type": "string"
         }
+    },
+    "variables": {
+        "UniqueStringBasedOnResourceGroupId": "[uniqueString(deployment().name, resourceGroup().id)]",
+        "Reader": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
     },
     "resources": [
         {
@@ -58,7 +68,19 @@
                 "enableSoftDelete": true,
                 "enablePurgeProtection": true
             }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2017-05-01",
+            "dependsOn": [
+                "[parameters('keyVaultName')]"
+            ],
+            "name": "[guid('AzureAutomationJobName', variables('UniqueStringBasedOnResourceGroupId'))]",
+            "properties": {
+                "roleDefinitionId": "[variables('Reader')]",
+                "principalId": "[parameters('enterpriseAppObjectId')]",
+                "scope": "resourceId(Microsoft.KeyVault/vaults, parameters('enterpriseAppObjectId'))"
+            }
         }
-    ],
-    "outputs": {}
+    ]
 }
