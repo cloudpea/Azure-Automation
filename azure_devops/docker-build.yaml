@@ -1,0 +1,27 @@
+resources:
+  repositories:
+  - repository: self
+    type: git
+    name: self
+
+pool:
+  name: $(pool-name)
+steps:
+- task: Docker@0
+  displayName: 'Build Docker Image'
+  inputs:
+    azureSubscription: $(subscription-connection)
+    azureContainerRegistry: $(acr-name)
+    dockerFile: $(docker-file-path)
+    buildArguments: '--rm'
+    imageName: '$(image-name):$(Build.BuildId)'
+    includeLatestTag: true
+
+- task: Docker@0
+  displayName: 'Push Docker Image to ACR'
+  inputs:
+    azureSubscription: $(subscription-connection)
+    azureContainerRegistry: $(acr-name)
+    action: 'Push an image'
+    imageName: '$(image-name):$(Build.BuildId)'
+    includeLatestTag: true
