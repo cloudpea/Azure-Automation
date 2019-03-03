@@ -1,0 +1,27 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "source_location": {
+      "value": "West Europe"
+    },
+    "recovery_location": {
+      "value": "North Europe"
+    },
+    "vault_name": {
+      "value": "ASR-WE-CLOUDPEA-VAULT-1"
+    },
+    "tier1_vm_count": {
+        "value": 1
+    },
+    "tier2_vm_count": {
+        "value": 1
+    },
+    "tier3_vm_count": {
+      "value": 1
+    },
+    "owner_tag": {
+        "value": "Ryan Froggatt"
+      }
+  }
+}
