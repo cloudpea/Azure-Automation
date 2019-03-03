@@ -1,0 +1,72 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "keyVaultName":{
+            "type": "string",
+            "defaultValue": "KV-PRD-UKS-CLOUDPEA",
+            "metadata": {
+                "description": "The Name of the Azure Key Vault."
+            }
+        },
+        "enterpriseAppObjectId": {
+            "metadata": {
+                "description": "Enterprise Application Object ID."
+            },
+            "type": "string"
+        }
+    },
+    "variables": {
+        "KeyVaultAssignmentName": "[concat(parameters('keyVaultName'), '/Microsoft.Authorization/', guid(concat(resourceGroup().id), variables('Reader')))]",
+        "Reader": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('keyVaultName')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2018-02-14",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "family": "A",
+                    "name": "standard"
+                },
+                "accessPolicies": [
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[parameters('enterpriseAppObjectId')]",
+                        "permissions": {
+                            "keys": [
+                                "get"
+                            ],
+                            "secrets": [
+                                "get"
+                            ],
+                            "certificates": [
+                                "get"
+                            ]
+                        }
+                    }
+                ],
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": true,
+                "enabledForTemplateDeployment": false,
+                "enableSoftDelete": true,
+                "enablePurgeProtection": true
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
+            "apiVersion": "2017-05-01",
+            "dependsOn": [
+                "[parameters('keyVaultName')]"
+            ],
+            "name": "[concat(variables('KeyVaultAssignmentName'))]",
+            "properties": {
+                "roleDefinitionId": "[variables('Reader')]",
+                "principalId": "[parameters('enterpriseAppObjectId')]"
+            }
+        }
+    ]
+}

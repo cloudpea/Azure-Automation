@@ -1,0 +1,42 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmPlatform": {
+            "value": "Windows"
+        },
+        "vmName": {
+            "value": "devopsmachine"
+        },
+        "vmCount": {
+            "value": 1
+        },
+        "vmSize": {
+            "value": "Standard_D2s_v3"
+        },
+        "adminPassword": {
+            "value": "aStrongPassword123!"
+        },
+        "vstsPoolName": {
+            "value": "testpool"
+        },
+        "vstsPersonalAccessToken": {
+            "value": ""
+        },
+        "vmVnetNeedCreating": {
+            "value": false
+        },
+        "vmVnetName": {
+            "value": "dvnet"
+        },
+        "vmSubnetName": {
+            "value": "default"
+        },
+        "vmVnetPrefix": {
+            "value": "172.31.255.0/24"
+        },
+        "vmSubnetPrefix": {
+            "value": "172.31.255.0/28"
+        }
+    }
+}
