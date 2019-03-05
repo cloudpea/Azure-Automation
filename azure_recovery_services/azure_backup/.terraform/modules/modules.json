@@ -1,1 +1,0 @@
-{"Modules":[{"Source":"modules/azure_backup","Key":"1.azure_backup;modules/azure_backup","Version":"","Dir":".terraform/modules/eb5cda1895ef9813beea9b15a374dbea","Root":""},{"Source":"modules/automation_account","Key":"1.azure_automation;modules/automation_account","Version":"","Dir":".terraform/modules/cb612fb09ac5d88289d34dcbde236f15","Root":""}]}
