@@ -4,21 +4,21 @@
     "parameters": {
         "source_location": {
             "type": "string",
-            "defaultValue": "ASR-WE-CLOUDPEA-VAULT-1",
+            "defaultValue": "West Europe",
             "metadata": {
                 "description": "The Source Location of the Virtual Machines to Replicate."
             }
         },
         "recovery_location": {
             "type": "string",
-            "defaultValue": "ASR-WE-CLOUDPEA-VAULT-1",
+            "defaultValue": "North Europe",
             "metadata": {
                 "description": "The Recovery Location of the Virtual Machines to Replicate."
             }
         },
         "vault_name": {
             "type": "string",
-            "defaultValue": "ASR-WE-CLOUDPEA-VAULT-1",
+            "defaultValue": "ASR-NE-CLOUDPEA-VAULT-1",
             "metadata": {
                 "description": "The Name of the Azure Recovery Services Vault."
             }
@@ -44,14 +44,25 @@
         "owner_tag": {
             "type": "string",
             "metadata": {
-                "description": "Owner Tag for ACR and AKS."
+                "description": "Owner Tag for Recovery Services Vault & Cache Storage Accounts."
             }
         }
     },
     "variables": {
-        "tier1count": "[add(div(parameters('tier1_vm_count'), 40), 1)]",
-        "tier2count": "[add(div(parameters('tier2_vm_count'), 40), 1)]",
-        "tier3count": "[add(div(parameters('tier3_vm_count'), 40), 1)]"
+        "source_fabric": "[concat('Azure-Source')]",
+        "recovery_fabric": "[concat('Azure-Recovery')]",
+        "tier1_policy_id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('vault_name'), 'ASR-TIER1-POLICY')]",
+        "tier2_policy_id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('vault_name'), 'ASR-TIER2-POLICY')]",
+        "tier3_policy_id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('vault_name'), 'ASR-TIER3-POLICY')]",
+        "tier1_count": "[add(div(parameters('tier1_vm_count'), 40), 1)]",
+        "tier2_count": "[add(div(parameters('tier2_vm_count'), 40), 1)]",
+        "tier3_count": "[add(div(parameters('tier3_vm_count'), 40), 1)]",
+        "tier1_protection_container": "[concat(parameters('vault_name'), '/', variables('source_fabric'), '/', 'ASR-TIER1-CONTAINER-')]",
+        "tier2_protection_container": "[concat(parameters('vault_name'), '/', variables('source_fabric'), '/', 'ASR-TIER2-CONTAINER-')]",
+        "tier3_protection_container": "[concat(parameters('vault_name'), '/', variables('source_fabric'), '/', 'ASR-TIER3-CONTAINER-')]",
+        "tier1_failback_protection_container": "[concat(parameters('vault_name'), '/', variables('recovery_fabric'), '/', 'ASR-TIER1-CONTAINER-FAILBACK-')]",
+        "tier2_failback_protection_container": "[concat(parameters('vault_name'), '/', variables('recovery_fabric'), '/', 'ASR-TIER2-CONTAINER-FAILBACK-')]",
+        "tier3_failback_protection_container": "[concat(parameters('vault_name'), '/', variables('recovery_fabric'), '/', 'ASR-TIER3-CONTAINER-FAILBACK-')]"
     },
     "resources": [
         {
@@ -120,7 +131,7 @@
                     }
                 },
                 {
-                    "name": "Azure",
+                    "name": "[variables('source_fabric')]",
                     "type": "replicationFabrics",
                     "apiVersion": "2018-01-10",
                     "dependsOn": [
@@ -132,19 +143,33 @@
                             "location": "[parameters('source_location')]"
                         }
                     }
+                },
+                {
+                    "name": "[variables('recovery_fabric')]",
+                    "type": "replicationFabrics",
+                    "apiVersion": "2018-01-10",
+                    "dependsOn": [
+                        "[parameters('vault_name')]"
+                    ],
+                    "properties": {
+                        "customDetails": {
+                            "instanceType": "Azure",
+                            "location": "[parameters('recovery_location')]"
+                        }
+                    }
                 }
             ]
         },
         {
-            "name": "[concat(parameters('vault_name'), '/', 'Azure', '/', 'ASR-TIER1-CONTAINER-', copyIndex(1))]",
+            "name": "[concat(variables('tier1_protection_container'), copyIndex(1))]",
             "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers",
             "apiVersion": "2018-01-10",
             "dependsOn": [
-                "Azure"
+                "[variables('source_fabric')]"
             ],
             "copy": {
                 "name": "tier1containercopy",
-                "count": "[variables('tier1count')]"
+                "count": "[variables('tier1_count')]"
             },
             "properties": {
                 "providerSpecificInput": [
@@ -155,34 +180,34 @@
             }
         },
         {
-            "name": "[concat(parameters('vault_name'), '/', 'Azure', '/', 'ASR-TIER1-CONTAINER-', copyIndex(1), '/', 'ASR-TIER1-MAPPING-', copyIndex(1))]",
+            "name": "[concat(variables('tier1_protection_container'), copyIndex(1), '/', 'ASR-TIER1-MAPPING-', copyIndex(1))]",
             "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings",
             "apiVersion": "2018-01-10",
             "dependsOn": [
-                "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), 'Azure', concat('ASR-TIER1-CONTAINER-', copyIndex(1)))]"
+                "[resourceid('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('source_fabric'), concat('ASR-TIER1-CONTAINER-', copyIndex(1)))]"
             ],
             "copy": {
                 "name": "tier1mappingcopy",
-                "count": "[variables('tier1count')]"
+                "count": "[variables('tier1_count')]"
             },
             "properties": {
-                "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), 'Azure', concat('ASR-TIER1-CONTAINER-', copyIndex(1)))]",
-                "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('vault_name'), 'ASR-TIER1-POLICY')]",
+                "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('source_fabric'), concat('ASR-TIER1-CONTAINER-', copyIndex(1)))]",
+                "policyId": "[variables('tier1_policy_id')]",
                 "providerSpecificInput": {
                     "instanceType": "A2A"
                 }
             }
         },
         {
-            "name": "[concat(parameters('vault_name'), '/', 'Azure', '/', 'ASR-TIER2-CONTAINER-', copyIndex(1))]",
+            "name": "[concat(variables('tier2_protection_container'), copyIndex(1))]",
             "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers",
             "apiVersion": "2018-01-10",
             "dependsOn": [
-                "Azure"
+                "[variables('source_fabric')]"
             ],
             "copy": {
                 "name": "tier2containercopy",
-                "count": "[variables('tier2count')]"
+                "count": "[variables('tier2_count')]"
             },
             "properties": {
                 "providerSpecificInput": [
@@ -193,34 +218,34 @@
             }
         },
         {
-            "name": "[concat(parameters('vault_name'), '/', 'Azure', '/', 'ASR-TIER2-CONTAINER-', copyIndex(1), '/', 'ASR-TIER2-MAPPING-', copyIndex(1))]",
+            "name": "[concat(variables('tier2_protection_container'), copyIndex(1), '/', 'ASR-TIER2-MAPPING-', copyIndex(1))]",
             "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings",
             "apiVersion": "2018-01-10",
             "dependsOn": [
-                "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), 'Azure', concat('ASR-TIER2-CONTAINER-', copyIndex(1)))]"
+                "[resourceid('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('source_fabric'), concat('ASR-TIER2-CONTAINER-', copyIndex(1)))]"
             ],
             "copy": {
                 "name": "tier2mappingcopy",
-                "count": "[variables('tier2count')]"
+                "count": "[variables('tier2_count')]"
             },
             "properties": {
-                "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), 'Azure', concat('ASR-TIER2-CONTAINER-', copyIndex(1)))]",
-                "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('vault_name'), 'ASR-TIER2-POLICY')]",
+                "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('source_fabric'), concat('ASR-TIER2-CONTAINER-', copyIndex(1)))]",
+                "policyId": "[variables('tier2_policy_id')]",
                 "providerSpecificInput": {
                     "instanceType": "A2A"
                 }
             }
         },
         {
-            "name": "[concat(parameters('vault_name'), '/', 'Azure', '/', 'ASR-TIER3-CONTAINER-', copyIndex(1))]",
+            "name": "[concat(variables('tier3_protection_container'), copyIndex(1))]",
             "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers",
             "apiVersion": "2018-01-10",
             "dependsOn": [
-                "Azure"
+                "[variables('source_fabric')]"
             ],
             "copy": {
                 "name": "tier3containercopy",
-                "count": "[variables('tier3count')]"
+                "count": "[variables('tier3_count')]"
             },
             "properties": {
                 "providerSpecificInput": [
@@ -231,19 +256,133 @@
             }
         },
         {
-            "name": "[concat(parameters('vault_name'), '/', 'Azure', '/', 'ASR-TIER3-CONTAINER-', copyIndex(1), '/', 'ASR-TIER3-MAPPING-', copyIndex(1))]",
+            "name": "[concat(variables('tier3_protection_container'), copyIndex(1), '/', 'ASR-TIER3-MAPPING-', copyIndex(1))]",
             "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings",
             "apiVersion": "2018-01-10",
             "dependsOn": [
-                "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), 'Azure', concat('ASR-TIER3-CONTAINER-', copyIndex(1)))]"
+                "[resourceid('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('source_fabric'), concat('ASR-TIER3-CONTAINER-', copyIndex(1)))]"
             ],
             "copy": {
                 "name": "tier3mappingcopy",
-                "count": "[variables('tier3count')]"
+                "count": "[variables('tier3_count')]"
             },
             "properties": {
-                "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), 'Azure', concat('ASR-TIER3-CONTAINER-', copyIndex(1)))]",
-                "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('vault_name'), 'ASR-TIER3-POLICY')]",
+                "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('source_fabric'), concat('ASR-TIER3-CONTAINER-', copyIndex(1)))]",
+                "policyId": "[variables('tier3_policy_id')]",
+                "providerSpecificInput": {
+                    "instanceType": "A2A"
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('tier1_failback_protection_container'), copyIndex(1))]",
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers",
+            "apiVersion": "2018-01-10",
+            "dependsOn": [
+                "[variables('recovery_fabric')]"
+            ],
+            "copy": {
+                "name": "tier1failbackcontainercopy",
+                "count": "[variables('tier1_count')]"
+            },
+            "properties": {
+                "providerSpecificInput": [
+                    {
+                        "instanceType": "A2A"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(variables('tier1_failback_protection_container'), copyIndex(1), '/', 'ASR-TIER1-MAPPING-FAILBACK-', copyIndex(1))]",
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings",
+            "apiVersion": "2018-01-10",
+            "dependsOn": [
+                "[resourceid('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('recovery_fabric'), concat('ASR-TIER1-CONTAINER-FAILBACK-', copyIndex(1)))]"
+            ],
+            "copy": {
+                "name": "tier1failbackmappingcopy",
+                "count": "[variables('tier1_count')]"
+            },
+            "properties": {
+                "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('recovery_fabric'), concat('ASR-TIER1-CONTAINER-', copyIndex(1)))]",
+                "policyId": "[variables('tier1_policy_id')]",
+                "providerSpecificInput": {
+                    "instanceType": "A2A"
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('tier2_failback_protection_container'), copyIndex(1))]",
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers",
+            "apiVersion": "2018-01-10",
+            "dependsOn": [
+                "[variables('recovery_fabric')]"
+            ],
+            "copy": {
+                "name": "tier2failbackcontainercopy",
+                "count": "[variables('tier2_count')]"
+            },
+            "properties": {
+                "providerSpecificInput": [
+                    {
+                        "instanceType": "A2A"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(variables('tier2_failback_protection_container'), copyIndex(1), '/', 'ASR-TIER2-MAPPING-FAILBACK-', copyIndex(1))]",
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings",
+            "apiVersion": "2018-01-10",
+            "dependsOn": [
+                "[resourceid('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('recovery_fabric'), concat('ASR-TIER2-CONTAINER-FAILBACK-', copyIndex(1)))]"
+            ],
+            "copy": {
+                "name": "tier2failbackmappingcopy",
+                "count": "[variables('tier2_count')]"
+            },
+            "properties": {
+                "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('recovery_fabric'), concat('ASR-TIER2-CONTAINER-', copyIndex(1)))]",
+                "policyId": "[variables('tier2_policy_id')]",
+                "providerSpecificInput": {
+                    "instanceType": "A2A"
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('tier3_failback_protection_container'), copyIndex(1))]",
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers",
+            "apiVersion": "2018-01-10",
+            "dependsOn": [
+                "[variables('recovery_fabric')]"
+            ],
+            "copy": {
+                "name": "tier3failbackcontainercopy",
+                "count": "[variables('tier3_count')]"
+            },
+            "properties": {
+                "providerSpecificInput": [
+                    {
+                        "instanceType": "A2A"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(variables('tier3_failback_protection_container'), copyIndex(1), '/', 'ASR-TIER3-MAPPING-FAILBACK-', copyIndex(1))]",
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings",
+            "apiVersion": "2018-01-10",
+            "dependsOn": [
+                "[resourceid('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('recovery_fabric'), concat('ASR-TIER3-CONTAINER-FAILBACK-', copyIndex(1)))]"
+            ],
+            "copy": {
+                "name": "tier3failbackmappingcopy",
+                "count": "[variables('tier3_count')]"
+            },
+            "properties": {
+                "targetProtectionContainerId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers', parameters('vault_name'), variables('recovery_fabric'), concat('ASR-TIER1-CONTAINER-', copyIndex(1)))]",
+                "policyId": "[variables('tier3_policy_id')]",
                 "providerSpecificInput": {
                     "instanceType": "A2A"
                 }

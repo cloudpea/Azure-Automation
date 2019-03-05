@@ -12,7 +12,7 @@ Param (
   [string]$vaultName,
 
   [Parameter(Mandatory=$True, HelpMessage="Name of the Resource Group Name to Deploy Resources")]
-  [securestring]$resourceGroupName,
+  [string]$resourceGroupName
 
 )
 Write-Output ""
