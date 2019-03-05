@@ -19,8 +19,12 @@ variable "automation_account_name" {
 }
 
 variable "rubook_start_date" {
-  default = "2019-03-31"
+  default     = "2019-03-31"
   description = "The Date for the Runbook to Start in the format - 2019-03-31"
+}
+
+variable "runas_cert_password" {
+  description = "A Password for the Certificate used by the Automation Run As Account."
 }
 
 variable "vault_name" {
