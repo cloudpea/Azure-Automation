@@ -3,6 +3,7 @@ resource "azurerm_recovery_services_vault" "vault_grs" {
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
   sku                 = "Standard"
+
   tags {
     Application = "Azure Backup"
     Owner       = "${var.tag_owner}"
@@ -14,7 +15,8 @@ resource "azurerm_recovery_services_vault" "vault_lrs" {
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
   sku                 = "Standard"
-tags {
+
+  tags {
     Application = "Azure Backup"
     Owner       = "${var.tag_owner}"
   }

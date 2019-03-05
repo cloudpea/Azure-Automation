@@ -18,6 +18,11 @@ variable "automation_account_name" {
   description = "The Name Prefix of the Recovery Services Vaults."
 }
 
+variable "rubook_start_date" {
+  default = "2019-03-31"
+  description = "The Date for the Runbook to Start in the format - 2019-03-31"
+}
+
 variable "vault_name" {
   default     = "RSV-WE-CLOUDPEA-1"
   description = "The Name Prefix of the Recovery Services Vaults."

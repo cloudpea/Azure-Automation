@@ -30,10 +30,11 @@ module "azure_backup" {
   tag_owner           = "${var.tag_owner}"
 }
 
-# Create Azure Automation Account & Runbooks
+# Create Azure Automation Account & Runbook
 module "azure_automation" {
   source                  = "modules/automation_account"
   resource_group_name     = "${azurerm_resource_group.automation_resource_group.name}"
   location                = "${var.location}"
   automation_account_name = "${var.automation_account_name}"
+  rubook_start_date       = "${var.rubook_start_date}"
 }

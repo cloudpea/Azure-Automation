@@ -22,3 +22,14 @@ resource "azurerm_automation_runbook" "backup_runbook" {
     uri = "https://raw.githubusercontent.com/cloudpea/Azure-Automation/master/azure_recovery_services/azure_backup/vm_backup_config.ps1"
   }
 }
+
+resource "azurerm_automation_schedule" "example" {
+  name                    = "tfex-automation-schedule"
+  resource_group_name     = "${var.resource_group_name}"
+  automation_account_name = "${azurerm_automation_account.automation_account.name}"
+  frequency               = "Day"
+  interval                = 1
+  timezone                = "UTC"
+  start_time              = "${var.rubook_start_date}T22:00:00"
+  description             = "Daily 10PM Schedule."
+}
