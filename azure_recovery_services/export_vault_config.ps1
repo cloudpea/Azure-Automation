@@ -6,7 +6,7 @@
   [string]$tagSearch1,
 
   [Parameter(Mandatory=$True, HelpMessage="VM Tag to Include in CSV")]
-  [string]$tagSearch2,
+  [string]$tagSearch2
 )
 Write-Output ""
 Write-Output "Export Azure Backup Vault Configuration"
