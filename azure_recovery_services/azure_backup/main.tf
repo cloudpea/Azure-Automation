@@ -33,11 +33,8 @@ module "azure_backup" {
 # Create Azure Automation Account & Runbook
 module "azure_automation" {
   source                      = "modules/automation_account"
-  subscription_id             = "${azurerm_subscription.current.id}"
   resource_group_name         = "${azurerm_resource_group.automation_resource_group.name}"
   location                    = "${var.location}"
   automation_account_name     = "${var.automation_account_name}"
-  automation_account_username = "${var.automation_account_username}"
-  automation_account_password = "${var.automation_account_password}"
   rubook_start_date           = "${var.rubook_start_date}"
 }

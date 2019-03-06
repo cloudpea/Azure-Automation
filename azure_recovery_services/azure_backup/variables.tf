@@ -23,10 +23,6 @@ variable "rubook_start_date" {
   description = "The Date for the Runbook to Start in the format - 2019-03-31"
 }
 
-variable "runas_cert_password" {
-  description = "A Password for the Certificate used by the Automation Run As Account."
-}
-
 variable "vault_name" {
   default     = "RSV-WE-CLOUDPEA-1"
   description = "The Name Prefix of the Recovery Services Vaults."
