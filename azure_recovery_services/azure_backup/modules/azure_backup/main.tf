@@ -114,3 +114,10 @@ resource "azurerm_recovery_services_protection_policy_vm" "policy_tier4" {
     count = 7
   }
 }
+
+resource "null_resource" "vm_backup_configuration" {
+  provisioner "local-exec" {
+    command = "vm_backup_config.ps1 -location ${var.location} -resource_group_name ${var.resource_group_name} -vault_prefix ${var.vault_name}"
+    interpreter = ["pwsh", "-File"]
+  }
+}

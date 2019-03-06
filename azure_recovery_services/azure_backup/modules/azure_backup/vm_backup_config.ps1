@@ -2,15 +2,21 @@
   [Parameter(Mandatory=$True, HelpMessage="Azure Region Location - westeurope, ukwest")]
   [string]$location,
 
-  [Parameter(Mandatory=$True, HelpMessage="A Prefix for the Recovery Services Vault")]
-  [string]$vault_prefix,
-
   [Parameter(Mandatory=$True, HelpMessage="Resource Group Name of the Recovery Services Vault")]
-  [string]$resource_group_name
+  [string]$resource_group_name,
+
+  [Parameter(Mandatory=$True, HelpMessage="A Prefix for the Recovery Services Vault")]
+  [string]$vault_prefix
 )
 
-Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Configuring Azure Virtual Machine Backups Based on Backup Tier Tag..."
+## Login with RunAs Account
+Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Loggind in to Azure with RunAs Account..."
+$connection = Get-AutomationConnection -Name AzureRunAsConnection
+Connect-AzAccount -ServicePrincipal -Tenant $connection.TenantID -ApplicationID $connection.ApplicationID -CertificateThumbprint $connection.CertificateThumbprint
+Select-AzSubscription -SubscriptionId $connection.SubscriptionID
+Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Logged in to Azure Successfully!"
 
+Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Configuring Azure Virtual Machine Backups Based on Backup Tier Tag..."
 ## Create Blank Item Count and Storage Redundancy Hashtables
 $itemcount = @{}
 $Storageredundancy = @{ 1="GRS"; 2="GRS"; 3="LRS"; 4="LRS"}
