@@ -3,6 +3,16 @@ provider "azurerm" {
   version = "=1.22.0"
 }
 
+# Configure the Null Provider
+provider "null" {
+  version = "=2.1.0"
+}
+
+# Configure the Template Provider
+provider "template" {
+  version = "=2.1.0"
+}
+
 # Set Azure Subsciption
 data "azurerm_subscription" "current" {}
 
@@ -32,9 +42,11 @@ module "azure_backup" {
 
 # Create Azure Automation Account & Runbook
 module "azure_automation" {
-  source                      = "modules/automation_account"
-  resource_group_name         = "${azurerm_resource_group.automation_resource_group.name}"
-  location                    = "${var.location}"
-  automation_account_name     = "${var.automation_account_name}"
-  rubook_start_date           = "${var.rubook_start_date}"
+  source                    = "modules/automation_account"
+  resource_group_name       = "${azurerm_resource_group.automation_resource_group.name}"
+  location                  = "${var.location}"
+  automation_account_name   = "${var.automation_account_name}"
+  rubook_start_date         = "${var.rubook_start_date}"
+  vault_name                = "${var.vault_name}"
+  vault_resource_group_name = "${azurerm_resource_group.backup_resource_group.name}"
 }

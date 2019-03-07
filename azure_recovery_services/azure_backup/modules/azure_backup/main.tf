@@ -114,3 +114,19 @@ resource "azurerm_recovery_services_protection_policy_vm" "policy_tier4" {
     count = 7
   }
 }
+
+resource "null_resource" "vault_storage_redundancy" {
+  provisioner "local-exec" {
+    command     = "az backup vault backup-properties set --name ${var.vault_name}-GRS --resource-group ${var.resource_group_name} --backup-storage-redundancy GeoRedundant"
+    interpreter = ["/bin/bash", "-c"]
+  }
+
+  provisioner "local-exec" {
+    command     = "az backup vault backup-properties set --name ${var.vault_name}-LRS --resource-group ${var.resource_group_name} --backup-storage-redundancy LocallyRedundant"
+    interpreter = ["/bin/bash", "-c"]
+  }
+  depends_on = [
+    "azurerm_recovery_services_vault.vault_grs",
+    "azurerm_recovery_services_vault.vault_lrs"
+  ] 
+}

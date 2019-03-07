@@ -1,0 +1,50 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "automation_account_name": {
+            "type": "string"
+        },
+        "schedule_name": {
+            "type": "string",
+            "defaultValue": "Daily_10PM"
+        },
+        "runbook_name": {
+            "type": "string",
+            "defaultValue": "Azure_VM_Backup_Configuration"
+        },
+        "job_schedule_guid":{
+            "type": "string",
+            "defaultValue": "[newguid()]"
+        },
+        "script_param_location": {
+            "type": "string"            
+        },
+        "script_param_resource_group_name": {
+            "type": "string"            
+        },
+        "script_param_vault_prefix": {
+            "type": "string"            
+        }
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('automation_account_name'), '/', parameters('job_schedule_guid'))]",
+            "type": "Microsoft.Automation/automationAccounts/jobSchedules",
+            "apiVersion": "2015-10-31",
+            "properties": {
+              "schedule": {
+                "name": "[parameters('schedule_name')]"
+              },
+              "runbook": {
+                "name": "[parameters('runbook_name')]"
+              },
+              "parameters": {
+                  "location": "[parameters('script_param_location')]",
+                  "resource_group_name": "[parameters('script_param_resource_group_name')]",
+                  "vault_prefix": "[parameters('script_param_vault_prefix')]"
+              }
+            }
+          }
+    ]
+}
