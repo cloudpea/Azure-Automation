@@ -1,0 +1,17 @@
+variable "resourcegroup_name" {}
+variable "location" {}
+variable "tag_application" {}
+variable "tag_environment" {}
+variable "tag_criticality" {}
+variable "tag_owner" {}
+variable "aks_cluster_name" {}
+variable "aks_dns_prefix" {}
+variable "node_count" {}
+variable "node_type" {}
+variable "node_disksize" {}
+variable "service_principal_application_id" {}
+variable "service_principal_password" {}
+variable "acr_name" {}
+variable "storage_account_name" {}
+variable "keyvault_name" {}
+variable "service_principal_object_id" {}

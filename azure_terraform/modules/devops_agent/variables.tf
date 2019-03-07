@@ -1,0 +1,15 @@
+variable "resourcegroup_name" {}
+variable "location" {}
+variable "tag_application" {}
+variable "tag_environment" {}
+variable "tag_criticality" {}
+variable "tag_owner" {}
+variable "vm_name" {}
+variable "vm_size" {}
+variable "vm_username" {}
+variable "vm_password" {}
+variable "corporate_ip" {}
+variable "subnet_id" {}
+variable "devops_organisation" {}
+variable "devops_pat" {}
+variable "devops_pool_name" {}

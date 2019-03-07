@@ -15,12 +15,31 @@ variable "location" {
 
 variable "automation_account_name" {
   default     = "AA-WE-CLOUDPEA-1"
-  description = "The Name Prefix of the Recovery Services Vaults."
+  description = "The Name for the Automation Account."
 }
 
-variable "rubook_start_date" {
-  default     = "2019-03-31"
+variable "rubook_name" {
+  description = "The Name for the Automation Account Runbook."
+}
+
+variable "rubook_uri" {
+  description = "The full URI to the PowerShell Script Location."
+}
+
+variable "schedule_name" {
+  description = "The Name for the Automation Account Schedule."
+}
+
+variable "schedule_frequency" {
+  description = "The Frequency the Schedule runs on - OneTime, Day, Hour, Week, or Month"
+}
+
+variable "schedule_start_date" {
   description = "The Date for the Runbook to Start in the format - 2019-03-31"
+}
+
+variable "schedule_start_date" {
+  description = "The Time for the Runbook to Start in the format - 22:00:00"
 }
 
 variable "vault_name" {

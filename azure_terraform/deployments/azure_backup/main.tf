@@ -29,7 +29,7 @@ resource "azurerm_resource_group" "automation_resource_group" {
 
 # Create Azure Backup Solution
 module "azure_backup" {
-  source              = "modules/azure_backup"
+  source              = "../../modules/azure_backup"
   resource_group_name = "${azurerm_resource_group.backup_resource_group.name}"
   location            = "${var.location}"
   vault_name          = "${var.vault_name}"
@@ -42,7 +42,7 @@ module "azure_backup" {
 
 # Create Azure Automation Account & Runbook
 module "azure_automation" {
-  source                    = "modules/automation_account"
+  source                    = "../../modules/automation_account"
   resource_group_name       = "${azurerm_resource_group.automation_resource_group.name}"
   location                  = "${var.location}"
   automation_account_name   = "${var.automation_account_name}"

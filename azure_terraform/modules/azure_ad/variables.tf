@@ -1,0 +1,1 @@
+variable "ad_app_name" {}
