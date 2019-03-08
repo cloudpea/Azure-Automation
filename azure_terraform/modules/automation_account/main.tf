@@ -8,7 +8,7 @@ resource "azurerm_automation_account" "automation_account" {
   }
 }
 
-resource "azurerm_automation_runbook" "backup_runbook" {
+resource "azurerm_automation_runbook" "runbook" {
   name                = "${var.rubook_name}"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
@@ -22,7 +22,7 @@ resource "azurerm_automation_runbook" "backup_runbook" {
   }
 }
 
-resource "azurerm_automation_schedule" "backup_runbook_schedule" {
+resource "azurerm_automation_schedule" "runbook_schedule" {
   name                    = "${var.schedule_name}"
   resource_group_name     = "${var.resource_group_name}"
   automation_account_name = "${azurerm_automation_account.automation_account.name}"
@@ -36,7 +36,7 @@ data "template_file" "jobschedule" {
   template = "${file("${path.module}/jobschedule.deploy.json")}"
 }
 
-resource "azurerm_template_deployment" "backup_job_schedule" {
+resource "azurerm_template_deployment" "job_schedule" {
   name                = "job_schedule"
   resource_group_name = "${var.resource_group_name}"
 
@@ -54,7 +54,7 @@ resource "azurerm_template_deployment" "backup_job_schedule" {
   deployment_mode = "Incremental"
 
   depends_on = [
-    "azurerm_automation_runbook.backup_runbook",
-    "azurerm_automation_schedule.backup_runbook_schedule",
+    "azurerm_automation_runbook.runbook",
+    "azurerm_automation_schedule.runbook_schedule",
   ]
 }

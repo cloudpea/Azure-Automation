@@ -46,7 +46,12 @@ module "azure_automation" {
   resource_group_name       = "${azurerm_resource_group.automation_resource_group.name}"
   location                  = "${var.location}"
   automation_account_name   = "${var.automation_account_name}"
-  rubook_start_date         = "${var.rubook_start_date}"
+  rubook_name               = "${var.runbook_name}"
+  rubook_uri                = "${var.runbook_uri}"
+  schedule_name             = "${var.schedule_name}"
+  schedule_frequency        = "${var.schedule_frequency}"
+  schedule_start_date       = "${var.schedule_start_date}"
+  schedule_start_time       = "${var.schedule_start_time}"
   vault_name                = "${var.vault_name}"
   vault_resource_group_name = "${azurerm_resource_group.backup_resource_group.name}"
 }
