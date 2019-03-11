@@ -1,0 +1,54 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vNetName": {
+      "value": "<Your_vNet>"
+    },
+    "vNetResourceGroup": {
+      "value": "<Your_vNet_RG>"
+    },
+    "subnetName": {
+      "value": "<Your_Subnet>"
+    },
+    "criticalityTag": {
+        "value": "Tier 1"
+    },
+    "environmentTag": {
+        "value": "Production"
+    },
+    "vmName": {
+      "value": "VM-PRD-1-DEVOPS"
+    },
+    "adminUsername": {
+      "value": "cloudpea-admin"
+    },
+    "sshPubKey": {
+      "value": "ssh-rsa <Pub_Key>"
+    },
+    "vmCount": {
+      "value": 2
+    },
+    "vmSize": {
+      "value": "Standard_D2s_v3"
+    },
+    "ImagePublisher": {
+      "value": "Canonical"
+    },
+    "ImageOffer": {
+      "value": "UbuntuServer"
+    },
+    "ImageSku": {
+      "value": "16.04.0-LTS"
+    },
+    "vstsAccount": {
+      "value": "cloudpea"
+    },
+    "vstsPoolName": {
+      "value": "<Customer_Agent_Pool>"
+    },
+    "vstsPersonalAccessToken": {
+      "value": "<Customer_PAT_Token>"
+    }
+  }
+}

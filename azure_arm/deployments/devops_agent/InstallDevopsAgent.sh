@@ -1,19 +1,17 @@
 #!/bin/bash
 # Version 1.0
-# Installs and configures VSTS, Docker, az cli and Kubernetes
+# Installs and configures Azure DevOps, Docker, Kubectl and az cli
 
-# Command usage: Install-LinuxVSTSAgent.sh $VSTS_AGENT_INPUT_TOKEN $VSTS_AGENT_INPUT_POOL
+# Command usage: InstallDevopsAgent.sh $VSTS_AGENT_INPUT_TOKEN $VSTS_AGENT_INPUT_POOL
+export DEVOPS_DOWNLOAD_URL="https://vstsagentpackage.azureedge.net/agent/2.141.1/vsts-agent-linux-x64-2.141.1.tar.gz"
+export ADMINUSER=${vm_username}
 
-export VSTS_DOWNLOAD_URL="https://vstsagentpackage.azureedge.net/agent/2.141.1/vsts-agent-linux-x64-2.141.1.tar.gz"
-export ORG="cloudpea"
-export ADMINUSER=$3
-
-# Environment variables used in VSTS configuration 
-export VSTS_AGENT_INPUT_URL="https://dev.azure.com/$ORG"
+# Environment variables used in Azure DevOps configuration 
+export VSTS_AGENT_INPUT_URL="https://dev.azure.com/${devops_organisation}"
 export VSTS_AGENT_INPUT_AUTH="pat"
-export VSTS_AGENT_INPUT_TOKEN=$1
-export VSTS_AGENT_INPUT_POOL=$2
-export VSTS_AGENT_INPUT_AGENT=$HOSTNAME
+export VSTS_AGENT_INPUT_TOKEN=${devops_pat}
+export VSTS_AGENT_INPUT_POOL=${devops_pool_name}
+export VSTS_AGENT_INPUT_AGENT=$(hostname)
 
 sudo apt-get update -y
 sudo apt-get upgrade -y
@@ -22,9 +20,9 @@ if [ ! $(which curl) ]; then
   sudo apt-get install -y curl
 fi
 
-if [ ! -a /etc/systemd/system/vsts.agent.$ORG.$AGENT.service ]; then
+if [ ! -a /etc/systemd/system/vsts.agent.${devops_organisation}.$VSTS_AGENT_INPUT_AGENT.service ]; then
   # Download, extract and configure the agent
-  curl $VSTS_DOWNLOAD_URL --output /tmp/vsts-agent-linux.x64.tar.gz
+  curl $DEVOPS_DOWNLOAD_URL --output /tmp/vsts-agent-linux.x64.tar.gz
   mkdir /home/$ADMINUSER/agent
   cd /home/$ADMINUSER/agent
   tar zxf /tmp/vsts-agent-linux.x64.tar.gz

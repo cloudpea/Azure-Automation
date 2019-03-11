@@ -7,13 +7,13 @@
       "minLength": 1,
       "maxLength": 13,
       "metadata": {
-        "description": "Display Name for the Virtual Machine"
+        "description": "Display Name for the Virtual Machine."
       }
     },
     "vmSize": {
       "type": "string",
       "metadata": {
-        "description": "VM Size/Type for the Virtual Machine"
+        "description": "VM Size/Type for the Virtual Machine."
       }
     },    
     "adminUsername": {
@@ -37,7 +37,7 @@
     "scriptUri": {
       "type": "string",
       "metadata": {
-        "description": "URL to Script File.."
+        "description": "URL to Script File."
       }
     },
     "vnetResourceGroupName": {
@@ -49,41 +49,41 @@
     "vnetName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the Virtual Network"
+        "description": "Name of the Virtual Network."
       }    
     },
     "subnetName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the Subnet"
+        "description": "Name of the Subnet."
       }    
     },
     "tagApplication": {
       "defaultValue": "App",
       "type": "string",
       "metadata": {
-        "description": "Enter Application tag value"
+        "description": "Enter Application tag value."
       }    
     },
     "tagEnvironment": {
       "defaultValue": "Production",
       "type": "string",
       "metadata": {
-        "description": "Enter Environment tag value"
+        "description": "Enter Environment tag value."
       }    
     },
     "tagOwner": {
       "defaultValue": "CloudPea",
       "type": "string",
       "metadata": {
-        "description": "Enter owners tag value"
+        "description": "Enter owners tag value."
       }    
     },
     "tagCriticality": {
       "defaultValue": "Tier 1",
       "type": "string",
       "metadata": {
-        "description": "Enter Criticality tag value"
+        "description": "Enter Criticality tag value."
       }    
     }
   },

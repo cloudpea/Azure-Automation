@@ -1,0 +1,290 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vNetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Virtual Network to host the VM."
+            }
+        },
+        "vNetResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Virtual Networks Resource Group."
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Virtual Network Subnet to host the VM."
+            }
+        },
+        "criticalityTag": {
+            "type": "string",
+            "metadata": {
+                "description": "Criticality Tag for VM resources"
+            },
+            "defaultValue": "Tier 1"
+        },
+        "environmentTag": {
+            "type": "string",
+            "metadata": {
+                "description": "Environment Tag for VM resources"
+            },
+            "defaultValue": "Production"
+        },
+        "vmName": {
+            "type": "string",
+            "metadata": {
+                "description": "Local name for the VM can be whatever you want"
+            },
+            "defaultValue": "VM-PRD-DEVOPS"
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "VM admin user name"
+            },
+            "defaultValue": "cloudpea-admin"
+        },
+        "sshPubKey": {
+            "type": "string",
+            "metadata": {
+                "description": "SSH Public Key"
+            }
+        },
+        "vmCount": {
+            "type": "int",
+            "metadata": {
+                "description": "Desired VM Count to deploy agents to."
+            },
+            "defaultValue": 2
+        },
+        "vmSize": {
+            "type": "string",
+            "metadata": {
+                "description": "Desired Size of the VM. Any valid option accepted but if you choose premium storage type you must choose a DS class VM size."
+            },
+            "defaultValue": "Standard_D2s_v3"
+        },
+        "ImagePublisher": {
+            "type": "string",
+            "defaultValue": "Canonical"
+        },
+        "ImageOffer": {
+            "type": "string",
+            "defaultValue": "UbuntuServer"
+        },
+        "ImageSku": {
+            "type": "string",
+            "defaultValue": "16.04.0-LTS"
+        },
+        "vstsAccount": {
+            "type": "string",
+            "defaultValue": "https://dev.azure.com/cloudpea"
+        },
+        "vstsPoolName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Azure DevOps Agent Pool."
+            }
+        },
+        "vstsPersonalAccessToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Personal Access Token for Azure DevOps Organisation."
+            }
+        }
+    },
+    "variables": {
+        "subnetId": "[resourceId(parameters('vNetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vNetName'), parameters('subnetName'))]",
+        "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', concat('NSG-', parameters('vmName')))]",
+        "avSetName": "[concat('AV-', parameters('vmName'))]",
+        "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-vsts-agent/",
+        "powershell": {
+            "script": "InstallVstsAgent.ps1",
+            "folder": "scripts",
+            "parameters": "[concat('-vstsAccount ', parameters('vstsAccount'), ' -personalAccessToken ', parameters('vstsPersonalAccessToken'), ' -PoolName ', parameters('vstsPoolName'), ' -AgentCount ', 1, ' -AdminUser ', parameters('adminUsername'), ' -Modules ', 'AzureRM')]"
+        }
+    },
+    "resources": [
+        {
+            "name": "[concat('AV-', parameters('vmName'))]",
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2018-06-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "Application": "Azure DevOps",
+                "Owner": "CloudPea",
+                "Criticality": "[parameters('criticalityTag')]",
+                "Environment": "[parameters('environmentTag')]"
+            },
+            "properties": {
+                "platformUpdateDomainCount": 2,
+                "platformFaultDomainCount": 2
+            },
+            "sku": {
+                "name": "Aligned"
+            }
+        },
+        {
+            "name": "[concat('NSG-', parameters('vmName'))]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-08-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Allow_SSH_Corp",
+                        "properties": {
+                            "description": "Allow SSH from Corporate Network",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "185.12.194.1/32",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-NIC')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2018-08-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('NSG-', parameters('vmName'))]"
+            ],
+            "tags": {
+                "Application": "Azure DevOps",
+                "Owner": "CloudPea",
+                "Criticality": "[parameters('criticalityTag')]",
+                "Environment": "[parameters('environmentTag')]"
+            },
+            "properties": {
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                },
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetId')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "copy": {
+                "name": "niccopy",
+                "count": "[parameters('vmCount')]"
+            }
+        },
+        {
+            "name": "[concat(parameters('vmName'), '-', copyIndex(1))]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2018-06-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "Application": "Azure DevOps",
+                "Owner": "CloudPea",
+                "Criticality": "[parameters('criticalityTag')]",
+                "Environment": "[parameters('environmentTag')]"
+            },
+            "dependsOn": [
+                "niccopy",
+                "[concat('AV-', parameters('vmName'))]"
+            ],
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('vmName'), '-', copyIndex(1))]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "linuxConfiguration": {
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('sshPubKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku": "[parameters('imageSku')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), '-', copyIndex(1), '-NIC'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": false
+                    }
+                }
+            },
+            "copy": {
+                "name": "vmcopy",
+                "count": "[parameters('vmCount')]"
+            },
+            "resources": [
+                {
+                    "name": "linuxvstssetup",
+                    "type": "extensions",
+                    "location": "[resourceGroup().location]",
+                    "apiVersion": "2018-06-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('vmName'), '-', copyIndex(1)))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "skipDos2Unix": false,
+                            "timestamp": 123456789
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[concat('./Install-LinuxVSTSAgent.sh ', parameters('vstsPersonalAccessToken'), ' ', parameters('vstsPoolName'), ' ', parameters('adminUsername'))]",
+                            "fileUris": [ "https://raw.githubusercontent.com/cloudpea/Azure-Automation/master/azure_devops/devops_agent/InstallDevopsAgent.sh" ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Authorization/locks",
+            "name": "[concat(resourceGroup().name, 'lock')]",
+            "apiVersion": "2016-09-01",
+            "properties": {
+                "level": "CanNotDelete",
+                "notes": "RG should not be deleted."
+            }
+        }
+    ]
+}

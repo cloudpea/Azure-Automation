@@ -1,0 +1,66 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "West Europe"
+        },
+        "applicationTag": {
+            "value": "Kubernetes"
+        },
+        "environmentTag": {
+            "value": "Production"
+        },        
+        "criticalityTag": {
+            "value": "Tier 1"
+        },
+        "ownertag": {
+            "value": "CloudPea"
+        },
+        "automationAccountName": {
+            "value": "AA-PRD-1-APP-1"
+        },
+        "storageAccountName": {
+            "value": "saprdappaks"
+        },
+        "acrName": {
+            "value": "acrprdappaks"
+        },
+        "keyVaultName": {
+            "value": "KV-PRD-1-APP-1"
+        },
+        "clusterName": {
+            "value": "AKS-PRD-1-APP-1"
+        },
+        "k8sVersion": {
+            "value": "1.11.5"
+        },
+        "clusterDnsPrefix": {
+            "value": "aksapp"
+        },
+        "osDiskSizeGB": {
+            "value": 0
+        },
+        "agentCount": {
+            "value": 1
+        },
+        "agentVMSize": {
+            "value": "Standard_B2s"
+        },
+        "enableRBAC": {
+            "value": true
+        },
+        "appRegClientId": {
+            "value": ""
+        },
+        "appRegClientSecret": {
+            "value": ""
+        },
+        "appRegObjectId": {
+            "value": ""
+        },
+        "entAppObjectId": {
+            "value": ""
+        }
+    }
+}
