@@ -1,27 +1,20 @@
 Param (
-  [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
-  [string]$subcriptionId,
-
-  [Parameter(Mandatory=$True, HelpMessage="Azure Region Location - westeurope, ukwest")]
-  [string]$location,
-
-  [Parameter(Mandatory=$True, HelpMessage="Prefix for Destination Availability Set")]
-  [string]$prefix,
-
-  [Parameter(Mandatory=$True, HelpMessage="Name of the Virtual Machine to Migrate")]
-  [string]$sourceVM,
-
-  [Parameter(Mandatory=$True, HelpMessage="Resource Group Name of the Virtual Machine to Migrate")]
-  [string]$sourceResourceGroup,
-
-  [Parameter(Mandatory=$True, HelpMessage="Name of the Destination Virtual Network")]
-  [string]$destinationVnet,
-
-  [Parameter(Mandatory=$True, HelpMessage="Name of the Destination Subnet")]
-  [string]$destinationSubnet,
-
-  [Parameter(Mandatory=$True, HelpMessage="Resource Group Name of the Destination Virtual Network")]
-  [string]$destinationResourceGroup,
+    [Parameter(Mandatory = $True, HelpMessage = "Azure Subscription ID")]
+    [string]$subcriptionId,
+    [Parameter(Mandatory = $True, HelpMessage = "Azure Region Location - westeurope, ukwest")]
+    [string]$location,
+    [Parameter(Mandatory = $True, HelpMessage = "Prefix for Destination Availability Set")]
+    [string]$prefix,
+    [Parameter(Mandatory = $True, HelpMessage = "Name of the Virtual Machine to Migrate")]
+    [string]$sourceVmName,
+    [Parameter(Mandatory = $True, HelpMessage = "Resource Group Name of the Virtual Machine to Migrate")]
+    [string]$sourceResourceGroup,
+    [Parameter(Mandatory = $True, HelpMessage = "Name of the Destination Virtual Network")]
+    [string]$destinationVnet,
+    [Parameter(Mandatory = $True, HelpMessage = "Name of the Destination Subnet")]
+    [string]$destinationSubnet,
+    [Parameter(Mandatory = $True, HelpMessage = "Resource Group Name of the Destination Virtual Network")]
+    [string]$destinationResourceGroup
 )
 Write-Output ""
 Write-Output "Azure Windows VM vNet Migration"
@@ -59,47 +52,45 @@ Write-Output ""
 
 # Create Destination Subnet Object
 $destSubnet = (Get-AzVirtualNetwork -Name $destinationVnet -ResourceGroupName $destinationResourceGroup).Subnets | `
-Where-Object {$_.Id -like "*$destinationSubnet"}
+    Where-Object {$_.Id -like "*$destinationSubnet"}
 Write-Output ""
 
 
 ## Get Source VM Config
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Gathering Source VM Configuration..."
-$sourceVM = Get-AzVM -Name $sourceVM -ResourceGroupName $sourceResourceGroup
+$sourceVM = Get-AzVM -Name $sourceVmName -ResourceGroupName $sourceResourceGroup
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Source VM Config Gathered Successfully!"
 Write-Output ""
 
+## Check VM is Windows
 
 ## Create the Destination Virtual Machine Config
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Creating Destination VM Config..."
 # Check for Availability Set Configuration
-if ($null -ne $sourceVM.AvailabilitySetReference.Id)
-{
+if ($null -ne $sourceVM.AvailabilitySetReference.Id) {
     #Create VM Config with Availablity Set Configuration
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Checking if Availability Set already exists"
     $sourceAvSet = Get-AzAvailabilitySet -Name ($sourceVM.AvailabilitySetReference.Id).Split('/')[8] -ResourceGroupName ($sourceVM.AvailabilitySetReference.Id).Split('/')[4]
     # Create Destination Availability Set Name
     $destAvSetName = ($prefix + $sourceAvSet.Name)
-    while ($destAvSetName.Length -gt 15)
-    {
+    while ($destAvSetName.Length -gt 15) {
         $prefix = Read-Host "Destination Availbility Set name is greater than 15 characters, please enter a different prefix"
         $destAvSetName = ($prefix + $sourceAvSet.Name)
     }
     # Check if Availability Set already Exists
     $destAvSet = Get-AzAvailabilitySet -Name $destAvSetName -ResourceGroupName $sourceAvSet.ResourceGroupName -ErrorVariable avSetError -ErrorAction SilentlyContinue
-    if ($avSetError)
-    {
+    if ($avSetError) {
         # Create Destination Availability Set
         Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] No existing Availability Set Creating New Set for Virtual Machine..."
         $destAvSet = New-AzAvailabilitySet -Location $sourceAvSet.Location -Name $destAvSetName `
-        -ResourceGroupName $sourceAvSet.ResourceGroupName `
-        -Sku $sourceAvSet.Sku `
-        -PlatformFaultDomainCount $sourceAvSet.PlatformFaultDomainCount `
-        -PlatformUpdateDomainCount $sourceAvSet.PlatformUpdateDomainCount
+            -ResourceGroupName $sourceAvSet.ResourceGroupName `
+            -Sku $sourceAvSet.Sku `
+            -PlatformFaultDomainCount $sourceAvSet.PlatformFaultDomainCount `
+            -PlatformUpdateDomainCount $sourceAvSet.PlatformUpdateDomainCount
         Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] New Availability Set Created Successfully!"
         Write-Output ""
-    } else 
-    {
+    }
+    else {
         Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] An Existing Availabiltiy Set Already Exists."
         Write-Output ""
     }
@@ -107,8 +98,8 @@ if ($null -ne $sourceVM.AvailabilitySetReference.Id)
     # Create the VM Config Object
     $destVM = New-AzVMConfig -VMName $sourceVM.Name -VMSize $sourceVM.HardwareProfile.VmSize -AvailabilitySetID $destAvSet.Id -Tags $sourceVM.Tags
 
-} else 
-{
+}
+else {
     # Create VM Config without Availability Set
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] No Availability Set Required"
     
@@ -119,7 +110,7 @@ if ($null -ne $sourceVM.AvailabilitySetReference.Id)
 
 # Create Network Interface Config
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Configuring the VM Network Interface"
-$newIPconfig = New-AzNetworkInterfaceIpConfig -Name ($sourceVM.Name +"-IpConfig1") -PrivateIpAddressVersion IPv4 -SubnetId $destSubnet.Id
+$newIPconfig = New-AzNetworkInterfaceIpConfig -Name ($sourceVM.Name + "-IpConfig1") -PrivateIpAddressVersion IPv4 -SubnetId $destSubnet.Id
 $destNIC = New-AzNetworkInterface -Name ($sourceVM.Name + "-NIC1") -ResourceGroupName $sourceResourceGroup -Location $location -IpConfiguration $newIPconfig 
 $destVM = Add-AzVMNetworkInterface -VM $destVM -Id $destNIC.Id
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] VM Network Interface Configured Successfully!"
@@ -128,15 +119,13 @@ Write-Output ""
 
 # Prompt to Begin Disk Migration
 $migrate = Read-Host "Please confirm if you are aready to proceed with the migration (Y \ N)"
-while ($migrate -ne "Y") 
-{
+while ($migrate -ne "Y") {
     $migrate = Read-Host "Please confirm when you are ready to proceed with the migration by entering Y"
 }
 
 
 ## Check If VM is using Managed or Unmanaged Disks
-if ($null -ne $sourceVM.StorageProfile.OsDisk.ManagedDisk) 
-{
+if ($null -ne $sourceVM.StorageProfile.OsDisk.ManagedDisk) {
     ## Managed Disk Migration
     Write-Output ""
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Starting Managed Disk Migration"
@@ -144,8 +133,7 @@ if ($null -ne $sourceVM.StorageProfile.OsDisk.ManagedDisk)
     #Stop Source Azure Virtual Machine
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Stopping Source Virtual Machine..."
     Stop-AzVM -Name $sourceVM.Name -ResourceGroupName $sourceVM.ResourceGroupName -Force
-    while ((Get-AzVM -Status -Name $sourceVM.Name -ResourceGroupName $sourceVM.ResourceGroupName).Statuses[1].DisplayStatus -ne "VM deallocated") 
-    {
+    while ((Get-AzVM -Status -Name $sourceVM.Name -ResourceGroupName $sourceVM.ResourceGroupName).Statuses[1].DisplayStatus -ne "VM deallocated") {
         Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Source VM currently shutting down sleeping for 10 Seconds."
         Start-Sleep -Seconds 10
     }
@@ -168,35 +156,35 @@ if ($null -ne $sourceVM.StorageProfile.OsDisk.ManagedDisk)
     # Create Destination Virtual Machine
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Destination Virtual Machine is now being provisioned..."
     $destVM = New-AzVM -ResourceGroupName $sourceResourceGroup -Location $location -VM $destVM -LicenseType "Windows_Server" -ErrorVariable vmError -ErrorAction SilentlyContinue
-    if ($vmError) 
-    {
-        Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] An error occured during the VM creation please check the destination VM is in a running state before proceeding."
+    if ($vmError) {
+        Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] An error occured during the VM creation please check the destination VM is in a running state."
+        Write-Output $vmError
         Write-Output ""
-    } else 
-    {
+    }
+    else {
         Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Destination VM Created Successfully!"
         Write-Output ""
     }
 
     # Get Latest Destination VM Config
-    $destVM = Get-AzVM -Name $sourceVM.Name -ResourceGroupName $sourceResourceGroup
-
-    #Stop Destination Azure Virtual Machine
-    Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Stopping Destination Virtual Machine..."
-    Stop-AzVM -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName -Force
-    while ((Get-AzVM -Status -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName).Statuses[1].DisplayStatus -ne "VM deallocated") 
-    {
-        Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] VM currently shutting down sleeping for 10 Seconds."
+    while ((Get-AzVM -Status -Name $sourceVM.Name -ResourceGroupName $sourceResourceGroup).Statuses[1].DisplayStatus -ne "VM Running") {
+        Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] VM currently provisioning sleeping for 10 Seconds."
         Start-Sleep -Seconds 10
     }
-    Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Destination Virtual Machine is now in a stopped state"
-    Write-Output ""
+    $destVM = Get-AzVM -Name $sourceVM.Name -ResourceGroupName $sourceResourceGroup
 
     # Migrate Data Disks from Source VM to Destination VM
-    if ($null -ne $sourceVM.StorageProfile.DataDisks) 
-    {
-        foreach ($Disk in $sourceVM.StorageProfile.DataDisks) 
-        {
+    if ($null -ne $sourceVM.StorageProfile.DataDisks) {
+        #Stop Destination Azure Virtual Machine
+        Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Stopping Destination Virtual Machine..."
+        Stop-AzVM -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName -Force
+        while ((Get-AzVM -Status -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName).Statuses[1].DisplayStatus -ne "VM deallocated") {
+            Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] VM currently shutting down sleeping for 10 Seconds."
+            Start-Sleep -Seconds 10
+        }
+        Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Destination Virtual Machine is now in a stopped state"
+        Write-Output ""
+        foreach ($Disk in $sourceVM.StorageProfile.DataDisks) {
             Write-Output ("[$(get-date -Format "dd/mm/yy hh:mm:ss")] Adding " + $Disk.Name + " to Destination VM")
             $DataDisk = $null
             $DataDisk = Get-AzDisk -DiskName $Disk.Name -ResourceGroupName $sourceVM.ResourceGroupName
@@ -206,8 +194,8 @@ if ($null -ne $sourceVM.StorageProfile.OsDisk.ManagedDisk)
             Write-Output ""
         }
     }
-} else 
-{
+}
+else {
     ## Unmanaged Disk Migration
     Write-Output ""
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Starting Unmanaged Disk Migration"
@@ -215,8 +203,7 @@ if ($null -ne $sourceVM.StorageProfile.OsDisk.ManagedDisk)
     #Stop Source Azure Virtual Machine
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Stopping Source Virtual Machine..."
     Stop-AzVM -Name $sourceVM.Name -ResourceGroupName $sourceVM.ResourceGroupName -Force
-    while ((Get-AzVM -Status -Name $sourceVM.Name -ResourceGroupName $sourceVM.ResourceGroupName).Statuses[1].DisplayStatus -ne "VM deallocated") 
-    {
+    while ((Get-AzVM -Status -Name $sourceVM.Name -ResourceGroupName $sourceVM.ResourceGroupName).Statuses[1].DisplayStatus -ne "VM deallocated") {
         Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Source VM currently shutting down sleeping for 10 Seconds."
         Start-Sleep -Seconds 10
     }
@@ -239,35 +226,35 @@ if ($null -ne $sourceVM.StorageProfile.OsDisk.ManagedDisk)
     # Create Destination Virtual Machine
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Destination Virtual Machine is now being provisioned..."
     $destVM = New-AzVM -ResourceGroupName $sourceResourceGroup -Location $location -VM $destVM -LicenseType "Windows_Server" -ErrorVariable vmError -ErrorAction SilentlyContinue
-    if ($vmError) 
-    {
+    if ($vmError) {
         Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] An error occured during the VM creation please check the destination VM is in a running state before proceeding."
         Write-Output ""
-    } else 
-    {
+    }
+    else {
         Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Destination VM Created Successfully!"
         Write-Output ""
     }
 
     # Get Latest Destination VM Config
-    $destVM = Get-AzVM -Name $sourceVM.Name -ResourceGroupName $sourceResourceGroup
-
-    #Stop Destination Azure Virtual Machine
-    Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Stopping Destination Virtual Machine..."
-    Stop-AzVM -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName -Force
-    while ((Get-AzVM -Status -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName).Statuses[1].DisplayStatus -ne "VM deallocated") 
-    {
-        Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] VM currently shutting down sleeping for 10 Seconds."
+    while ((Get-AzVM -Status -Name $sourceVM.Name -ResourceGroupName $sourceResourceGroup).Statuses[1].DisplayStatus -ne "VM Running") {
+        Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] VM currently provisioning sleeping for 10 Seconds."
         Start-Sleep -Seconds 10
     }
-    Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Destination Virtual Machine is now in a stopped state"
-    Write-Output ""
+    $destVM = Get-AzVM -Name $sourceVM.Name -ResourceGroupName $sourceResourceGroup
 
     # Migrate Data Disks from Source VM to Destination VM
-    if ($null -ne $sourceVM.StorageProfile.DataDisks) 
-    {
-        foreach ($Disk in $sourceVM.StorageProfile.DataDisks) 
-        {
+    if ($null -ne $sourceVM.StorageProfile.DataDisks) {
+        #Stop Destination Azure Virtual Machine
+        Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Stopping Destination Virtual Machine..."
+        Stop-AzVM -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName -Force
+        while ((Get-AzVM -Status -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName).Statuses[1].DisplayStatus -ne "VM deallocated") {
+            Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] VM currently shutting down sleeping for 10 Seconds."
+            Start-Sleep -Seconds 10
+        }
+        Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Destination Virtual Machine is now in a stopped state"
+        Write-Output ""
+
+        foreach ($Disk in $sourceVM.StorageProfile.DataDisks) {
             $uri = $null
             $uri = Read-Host ("Please provide the VHD URI for " + $Disk.Name)
             Write-Output ("[$(get-date -Format "dd/mm/yy hh:mm:ss")] Adding " + $Disk.Name + " to Destination VM")
@@ -282,8 +269,7 @@ if ($null -ne $sourceVM.StorageProfile.OsDisk.ManagedDisk)
 ## Start Destination VM
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Powering on the Migrated VM..."
 Start-AzVM -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName
-while ((Get-AzVM -Status -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName).Statuses[1].DisplayStatus -ne "VM running") 
-{
+while ((Get-AzVM -Status -Name $destVM.Name -ResourceGroupName $destVM.ResourceGroupName).Statuses[1].DisplayStatus -ne "VM running") {
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] VM currently powering on sleeping for 10 Seconds."
     Start-Sleep -Seconds 10
 }
@@ -293,7 +279,6 @@ Write-Output ""
 ## Manual Cleanup Reminder
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Migration Completed successfully! Please cleanup the below resources:"
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Network Interface - $($sourceVM.NetworkProfile.NetworkInterfaces.Id.Split('/')[8])"
-if ($null -ne $sourceVM.AvailabilitySetReference.Id) 
-{
+if ($null -ne $sourceVM.AvailabilitySetReference.Id) {
     Write-Output ("[$(get-date -Format "dd/mm/yy hh:mm:ss")] Availability Set - " + ($sourceVM.AvailabilitySetReference.Id).Split('/')[8])
 }
