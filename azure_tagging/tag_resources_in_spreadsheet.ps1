@@ -67,7 +67,7 @@ foreach ($Item in $CSV) {
         if ($Item.$KeyName -ne "") {
 
             #Tag does not currently exist
-            if ($ResourceTags.$KeyName -eq $null) {
+            if ($null -eq $ResourceTags.$KeyName) {
                 $ResourceTags += @{ $KeyName = $Item.$KeyName }
             }
 

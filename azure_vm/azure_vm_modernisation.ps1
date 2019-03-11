@@ -77,15 +77,8 @@ foreach($TableEntry in $CSV) {
     }
 }
 
-#Get All Azure VMs
-Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Gathering all Virtual Machines..."
-$AllVMs = Get-AzVM
-Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] All Virtual Machines gathered successfully"
-Write-Output ""
-
-
 #Process Each VM based on Hash Table Key Value Pairs
-foreach ($VM in $AllVMs) {
+foreach ($VM in Get-AzVM) {
 
     #If Hash Table contains the VM Size Output Recommendation
     if ($CSVTable[$VM.HardwareProfile.VmSize]) {
@@ -95,13 +88,13 @@ foreach ($VM in $AllVMs) {
 
     #Write output to Log File
     $LogFile += "`n" + "[$(get-date -Format "dd/mm/yy hh:mm:ss")] " + $VM.Name + "can be modernised to " + $CSVTable[$VM.HardwareProfile.VmSize]
-    Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")]" $VM.Name " can be modernised to" $CSVTable[$VM.HardwareProfile.VmSize]
+    Write-Output ("[$(get-date -Format "dd/mm/yy hh:mm:ss")]"+$VM.Name+" can be modernised to"+$CSVTable[$VM.HardwareProfile.VmSize])
     } 
     
     else {
     #Write output to Log File
     $LogFile += "`n" + "[$(get-date -Format 'dd/mm/yy hh:mm:ss')] " + $VM.Name + " cannot be modernised"
-    Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")]" $VM.Name "cannot be modernised" 
+    Write-Output ("[$(get-date -Format "dd/mm/yy hh:mm:ss")]"+$VM.Name+"cannot be modernised" )
     }
 }
 
