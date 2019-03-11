@@ -1,6 +1,6 @@
 ﻿Param (
   [Parameter(Mandatory=$True, HelpMessage="Azure Subscription ID")]
-  [string]$resubcriptionIdgion,
+  [string]$subcriptionId,
 
   [Parameter(Mandatory=$True, HelpMessage="Azure Region to Deploy the Policy to")]
   [string]$region,
@@ -47,13 +47,13 @@ Select-AzSubscription -SubscriptionId $subcriptionId
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Subscription successfully selected"
 Write-Output ""
 
-# Deploy Azure RM "Allowed Location" Policy
+# Deploy Azure "Allowed Location" Policy
 $Policy = Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Allowed locations' -and $_.Properties.PolicyType -eq 'BuiltIn'}
 $AllowedLocations = @{"listOfAllowedLocations"=($locations)}
 New-AzPolicyAssignment -Name "Allowed Locations" -PolicyDefinition $Policy -Scope "/subscriptions/$((Get-AzContext).Subscription.Id)" -PolicyParameterObject $AllowedLocations
 
 
-# Deploy Azure RM "Enforce Tag and its value" Policy
+# Deploy Azure "Enforce Tag and its value" Policy
 $Policy = Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -eq 'Apply tag and its default value' -and $_.Properties.PolicyType -eq 'BuiltIn'}
 $PolicyDefinition = New-Object System.Collections.Generic.List[System.Object]
 
@@ -75,10 +75,10 @@ foreach($tagName in $tagNames){
 New-AzPolicySetDefinition -Name "TagInitiative" -DisplayName "Apply default tags and default values" -Description "Apply default tags and default values" -PolicyDefinition ($PolicyDefinition | ConvertTo-JSON -Compress -Depth 5)
 $PolicySet = Get-AzPolicySetDefinition | Where-Object {$_.Name -eq 'TagInitiative'}
 Start-Sleep -s 10
-New-AzPolicyAssignment -Name "Apply default tags and default values" -PolicySetDefinition $PolicySet -Scope "/subscriptions/$((Get-AzContext).Subscription.Id)" -Sku @{"name"="A1";"tier"="Standard"}
+New-AzPolicyAssignment -Name "Apply default tags and default values" -PolicySetDefinition $PolicySet -Scope "/subscriptions/$((Get-AzContext).Subscription.Id)"
 
 
-# Deploy Azure RM "Allowed Virtual Machine SKU's" Policy
+# Deploy Azure "Allowed Virtual Machine SKU's" Policy
 $vmList = New-Object System.Collections.Generic.List[System.Object]
 foreach($vmSku in $vmSkus){
     foreach($vmSize in (Get-AzVMSize -location $region | Where-Object {$_.Name -match $vmSeries}).Name){
