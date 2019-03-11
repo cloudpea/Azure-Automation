@@ -1,72 +1,56 @@
 ﻿Param (
-  [Parameter(Mandatory=$True, HelpMessage="Azure AD Login Username")]
-  [string]$username,
-
-  [Parameter(Mandatory=$True, HelpMessage="Azure AD Login Password")]
-  [securestring]$password,
+  [Parameter(Mandatory=$True, HelpMessage="Azure Tenant ID")]
+  [string]$tenantId,
 
   [Parameter(Mandatory=$True, HelpMessage="Comma-Delimitted List of Azure AD Group Name")]
-  [array]$groupNames,
-
+  [array]$groupNames
 )
 Write-Output ""
 Write-Output "Export Azure AD Users"
-Write-Output "Version - 1.0.0"
+Write-Output "Version - 1.1.0"
 Write-Output "Author - Ryan Froggatt (CloudPea)"
 Write-Output ""
-Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Importing module..."
 
-#Install and Import AzureAD Module
+#Install and Import Az Module
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Importing module..."
-Import-Module -Name AzureAD -ErrorVariable ModuleError -ErrorAction SilentlyContinue
+Import-Module -Name Az -ErrorVariable ModuleError -ErrorAction SilentlyContinue
 If ($ModuleError) {
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Installing module..."
-    Install-Module -Name AzureAD
-    Import-Module -Name AzureAD
+    Install-Module -Name Az
+    Import-Module -Name Az
     Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Successfully Installed module..."
 }
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Successfully Imported module"
 Write-Output ""
 
-
-#Loging with the Azure AD Admin account
-Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Connecting to Azure AD..."
-$credentials = New-Object System.Management.Automation.PSCredential ($username, $password)
-Connect-AzureAD -Credential $credentials
-Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Login successful"
+#Login to Azure
+Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Logging in to Azure Account..."
+Connect-AzAccount -Tenant $tenantId
+Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Successfully logged in to Azure Account"
 Write-Output ""
 
-#Create CSV Headers
-$csvString = @"
-DisplayName,Email
 
-"@
+#Create CSV Headers
+"""DisplayName"",""Email"",""Group""" | Out-File -Encoding ASCII -FilePath ".\AD Users.csv"
 
 foreach ($group in $groupNames) {
 
     #Get Group Members
-    Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Getting Group Membership..."
+    Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Getting Group Membership for $group..."
 
-    $adGroup = Get-AzureADGroup -SearchString $group
-    $adGroupMembers = Get-AzureADGroupMember -ObjectId $adGroup.ObjectId
+    $adGroup = Get-AzADGroup -SearchString $group
+    $adGroupMembers = Get-AzADGroupMember -ObjectId $adGroup.Id
 
     foreach ($member in $adGroupMembers) {
         #Write Users UPN and Display Name to CSV
-        $email = $Member.UserPrincipalName
-        $csvString += @" 
-    $($member.DisplayName),$email
-    
-    "@
+        """"+$member.DisplayName+""","""+$member.UserPrincipalName+""","""+$group+"""" | Out-File -Encoding ASCII -FilePath ".\AD Users.csv" -Append      
     }
-    Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Group Membership Complete"
+    Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Group Membership Complete for $group"
 }
-
-#Output Users to CSV file
-Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Writing out CSV file..."
-Out-File -InputObject $csvString -FilePath ".\AD Users.csv"
+Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] CSV Exported Successfully!"
 
 #Disconnect from Azure AD
 Write-Output ""
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Disconnecting from Azure AD..."
-Disconnect-AzureAD
+Disconnect-AzAccount
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] Successfully disconnected"
