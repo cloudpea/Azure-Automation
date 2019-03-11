@@ -61,7 +61,8 @@ $CSV = Import-Csv $csvFilePath
 Write-Output "[$(get-date -Format "dd/mm/yy hh:mm:ss")] CSV Imported Successfully!"
 Write-Output ""
 
-
+#Convert Password to Secure String
+$serviceAccountPassword = ConvertTo-SecureString -String $serviceAccountPassword -AsPlainText
 
 ####################################################################
 #        MOVE RESOURCES INTO A SINGLE STAGING RESOURCE GROUP       #
