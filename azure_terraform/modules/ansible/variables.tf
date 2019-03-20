@@ -1,0 +1,14 @@
+variable "resourcegroup_name" {}
+variable "location" {}
+variable "tag_application" {}
+variable "tag_environment" {}
+variable "tag_criticality" {}
+variable "tag_owner" {}
+variable "vm_name" {}
+variable "vm_size" {}
+variable "vm_username" {}
+variable "vm_password" {}
+variable "ansible_username" {}
+variable "ansible_git_url" {}
+variable "corporate_ip" {}
+variable "subnet_id" {}
