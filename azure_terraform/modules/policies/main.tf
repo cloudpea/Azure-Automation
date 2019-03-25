@@ -1,9 +1,11 @@
+#Create Top Level Management Group
 resource "azurerm_management_group" "policy-mgmt-grp" {
   group_id = "${lower(var.customer_prefix)}rootmg"
   display_name = "${var.customer_prefix} Root MG"
   subscription_ids = "${var.management_group_subscriptions}"
 }
 
+#Create Allow Locations Policy Definition
 resource "azurerm_policy_definition" "policy-allow-locations-definition" {
   name = "allowed-locations-policy-definition"
   management_group_id = "${azurerm_management_group.policy-mgmt-grp.group_id}"
@@ -54,6 +56,7 @@ PARAMETERS
   }
 }
 
+#Create Allow Locations Policy Assignment
 resource "azurerm_policy_assignment" "policy-allow-locations-assignment" {
   name = "pol-allow-locations"
   scope = "${azurerm_management_group.policy-mgmt-grp.id}"
@@ -72,6 +75,7 @@ resource "azurerm_policy_assignment" "policy-allow-locations-assignment" {
 PARAMETERS
 }
 
+#Create Allow VM SkUs Policy Definition
 resource "azurerm_policy_definition" "policy-allow-vm-skus-definition" {
   name = "allowed-vm-skus-policy-definition"
   management_group_id = "${azurerm_management_group.policy-mgmt-grp.group_id}"
@@ -120,6 +124,7 @@ PARAMETERS
   }
 }
 
+#Create Allow VM SkUs Policy Assignment
 resource "azurerm_policy_assignment" "policy-allow-vm-sku-assignment" {
   name = "pol-allow-vm-sku"
   scope = "${azurerm_management_group.policy-mgmt-grp.id}"
@@ -276,6 +281,7 @@ resource "azurerm_policy_assignment" "policy-allow-vm-sku-assignment" {
 PARAMETERS
 }
 
+#Create Tagging Policy Definition
 resource "azurerm_policy_definition" "policy-tags-definition" {
   name = "tags-policy-definition"
   management_group_id = "${azurerm_management_group.policy-mgmt-grp.group_id}"
@@ -326,6 +332,7 @@ PARAMETERS
   }
 }
 
+#Create Owner Tag Policy Assignment
 resource "azurerm_policy_assignment" "policy-tags-owner-assignment" {
   name = "pol-tags-owner"
   scope = "${azurerm_management_group.policy-mgmt-grp.id}"
@@ -344,16 +351,17 @@ resource "azurerm_policy_assignment" "policy-tags-owner-assignment" {
 PARAMETERS
 }
 
-resource "azurerm_policy_assignment" "policy-tags-project-assignment" {
-  name = "pol-tags-project"
+#Create Application Tag Policy Assignment
+resource "azurerm_policy_assignment" "policy-tags-application-assignment" {
+  name = "pol-tags-application"
   scope = "${azurerm_management_group.policy-mgmt-grp.id}"
   policy_definition_id = "${azurerm_policy_definition.policy-tags-definition.id}"
-  description = "Policy Assignment to enforce Project tag"
-  display_name = "Apply Project Tag"
+  description = "Policy Assignment to enforce Application tag"
+  display_name = "Apply Application Tag"
   parameters = <<PARAMETERS
 {
   "tagName": {
-    "value": "Project"
+    "value": "Application"
   },
   "tagValue": {
     "value": "Unknown"
@@ -362,16 +370,17 @@ resource "azurerm_policy_assignment" "policy-tags-project-assignment" {
 PARAMETERS
 }
 
-resource "azurerm_policy_assignment" "policy-tags-service-assignment" {
-  name = "pol-tags-service"
+#Create Application Role Tag Policy Assignment
+resource "azurerm_policy_assignment" "policy-tags-app-role-assignment" {
+  name = "pol-tags-app-role"
   scope = "${azurerm_management_group.policy-mgmt-grp.id}"
   policy_definition_id = "${azurerm_policy_definition.policy-tags-definition.id}"
-  description = "Policy Assignment to enforce Service tag"
-  display_name = "Apply Service Tag"
+  description = "Policy Assignment to enforce Application Role tag"
+  display_name = "Apply Application Role Tag"
   parameters = <<PARAMETERS
 {
   "tagName": {
-    "value": "Service"
+    "value": "Application Role"
   },
   "tagValue": {
     "value": "Unknown"
@@ -380,78 +389,7 @@ resource "azurerm_policy_assignment" "policy-tags-service-assignment" {
 PARAMETERS
 }
 
-resource "azurerm_policy_assignment" "policy-tags-app-id-assignment" {
-  name = "pol-tags-app-id"
-  scope = "${azurerm_management_group.policy-mgmt-grp.id}"
-  policy_definition_id = "${azurerm_policy_definition.policy-tags-definition.id}"
-  description = "Policy Assignment to enforce Application ID tag"
-  display_name = "Apply Application ID Tag"
-  parameters = <<PARAMETERS
-{
-  "tagName": {
-    "value": "Application ID"
-  },
-  "tagValue": {
-    "value": "Unknown"
-  }
-}
-PARAMETERS
-}
-
-resource "azurerm_policy_assignment" "policy-tags-version-assignment" {
-  name = "pol-tags-version"
-  scope = "${azurerm_management_group.policy-mgmt-grp.id}"
-  policy_definition_id = "${azurerm_policy_definition.policy-tags-definition.id}"
-  description = "Policy Assignment to enforce Version tag"
-  display_name = "Apply Version Tag"
-  parameters = <<PARAMETERS
-{
-  "tagName": {
-    "value": "Version"
-  },
-  "tagValue": {
-    "value": "Unknown"
-  }
-}
-PARAMETERS
-}
-
-resource "azurerm_policy_assignment" "policy-tags-tier-assignment" {
-  name = "pol-tags-tier"
-  scope = "${azurerm_management_group.policy-mgmt-grp.id}"
-  policy_definition_id = "${azurerm_policy_definition.policy-tags-definition.id}"
-  description = "Policy Assignment to enforce Tier tag"
-  display_name = "Apply Tier Tag"
-  parameters = <<PARAMETERS
-{
-  "tagName": {
-    "value": "Tier"
-  },
-  "tagValue": {
-    "value": "Unknown"
-  }
-}
-PARAMETERS
-}
-
-resource "azurerm_policy_assignment" "policy-tags-app-roles-assignment" {
-  name = "pol-tags-app-roles"
-  scope = "${azurerm_management_group.policy-mgmt-grp.id}"
-  policy_definition_id = "${azurerm_policy_definition.policy-tags-definition.id}"
-  description = "Policy Assignment to enforce Application Roles tag"
-  display_name = "Apply Application Roles Tag"
-  parameters = <<PARAMETERS
-{
-  "tagName": {
-    "value": "Application Roles"
-  },
-  "tagValue": {
-    "value": "Unknown"
-  }
-}
-PARAMETERS
-}
-
+#Create Environment Tag Policy Assignment
 resource "azurerm_policy_assignment" "policy-tags-environment-assignment" {
   name = "pol-tags-environment"
   scope = "${azurerm_management_group.policy-mgmt-grp.id}"
@@ -462,60 +400,6 @@ resource "azurerm_policy_assignment" "policy-tags-environment-assignment" {
 {
   "tagName": {
     "value": "Environment"
-  },
-  "tagValue": {
-    "value": "Unknown"
-  }
-}
-PARAMETERS
-}
-
-resource "azurerm_policy_assignment" "policy-tags-business-unit-assignment" {
-  name = "pol-tags-business-unit"
-  scope = "${azurerm_management_group.policy-mgmt-grp.id}"
-  policy_definition_id = "${azurerm_policy_definition.policy-tags-definition.id}"
-  description = "Policy Assignment to enforce Business Unit tag"
-  display_name = "Apply Business Unit Tag"
-  parameters = <<PARAMETERS
-{
-  "tagName": {
-    "value": "Business Unit"
-  },
-  "tagValue": {
-    "value": "Unknown"
-  }
-}
-PARAMETERS
-}
-
-resource "azurerm_policy_assignment" "policy-tags-cost-centre-assignment" {
-  name = "pol-tags-cost-centre"
-  scope = "${azurerm_management_group.policy-mgmt-grp.id}"
-  policy_definition_id = "${azurerm_policy_definition.policy-tags-definition.id}"
-  description = "Policy Assignment to enforce Cost Centre tag"
-  display_name = "Apply Cost Centre Tag"
-  parameters = <<PARAMETERS
-{
-  "tagName": {
-    "value": "Cost Centre"
-  },
-  "tagValue": {
-    "value": "Unknown"
-  }
-}
-PARAMETERS
-}
-
-resource "azurerm_policy_assignment" "policy-tags-budget-assignment" {
-  name = "pol-tags-${lower(var.customer_prefix)}-budget"
-  scope = "${azurerm_management_group.policy-mgmt-grp.id}"
-  policy_definition_id = "${azurerm_policy_definition.policy-tags-definition.id}"
-  description = "Policy Assignment to enforce ${var.customer_prefix} Budget tag"
-  display_name = "Apply ${var.customer_prefix} Budget Tag"
-  parameters = <<PARAMETERS
-{
-  "tagName": {
-    "value": "${var.customer_prefix} Budget"
   },
   "tagValue": {
     "value": "Unknown"

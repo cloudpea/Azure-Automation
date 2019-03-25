@@ -1,5 +1,6 @@
 ### Create the main Hub resources ###
 
+# Create Hub Resource Group
 resource "azurerm_resource_group" "hub-rg" {
   name     = "${var.hub_resource_group_name}"
   location = "${var.hub_location}"
@@ -11,6 +12,7 @@ resource "azurerm_resource_group" "hub-rg" {
   }
 }
 
+# Create Hub vNet
 resource "azurerm_virtual_network" "hub-net" {
   name                = "${var.hub_network_name}"
   resource_group_name = "${azurerm_resource_group.hub-rg.name}"
@@ -25,6 +27,7 @@ resource "azurerm_virtual_network" "hub-net" {
   }
 }
 
+# Create Default Hub Netowrk Security Group
 resource "azurerm_network_security_group" "hub-defualt-nsg" {
   name                = "${azurerm_virtual_network.hub-net.name}-default-nsg"
   resource_group_name = "${azurerm_resource_group.hub-rg.name}"
@@ -49,6 +52,7 @@ resource "azurerm_network_security_group" "hub-defualt-nsg" {
   }
 }
 
+# Create Hub Mgmt Subnet
 resource "azurerm_subnet" "hub-mgmt-sn" {
   name                      = "mgmt-sn"
   resource_group_name       = "${azurerm_virtual_network.hub-net.resource_group_name}"
@@ -57,6 +61,7 @@ resource "azurerm_subnet" "hub-mgmt-sn" {
   network_security_group_id = "${azurerm_network_security_group.hub-defualt-nsg.id}"
 }
 
+# Create Hub AD Subnet
 resource "azurerm_subnet" "hub-ad-sn" {
   name                      = "ad-sn"
   resource_group_name       = "${azurerm_virtual_network.hub-net.resource_group_name}"
@@ -65,14 +70,16 @@ resource "azurerm_subnet" "hub-ad-sn" {
   network_security_group_id = "${azurerm_network_security_group.hub-defualt-nsg.id}"
 }
 
-resource "azurerm_subnet" "hub-shared-sn" {
-  name                      = "shared-sn"
+# Create Hub Shared Services Subnet
+resource "azurerm_subnet" "hub-sharedservices-sn" {
+  name                      = "sharedservices-sn"
   resource_group_name       = "${azurerm_virtual_network.hub-net.resource_group_name}"
   virtual_network_name      = "${azurerm_virtual_network.hub-net.name}"
   address_prefix            = "${var.hub_shared_resource_subnet_address_space}"
   network_security_group_id = "${azurerm_network_security_group.hub-defualt-nsg.id}"
 }
 
+# Create Hub vNet Lock
 resource "azurerm_management_lock" "hub-net-lock" {
   name       = "${var.hub_network_name}-lock"
   scope      = "${azurerm_virtual_network.hub-net.id}"
@@ -80,8 +87,8 @@ resource "azurerm_management_lock" "hub-net-lock" {
   notes      = "Prevent deletion of VNet."
 }
 
-### Gateway Subnet ###
 
+#Create Hub Gateway Subnet
 resource "azurerm_subnet" "hub-gw-sn" {
   count                = "${signum(var.create_vpn_gateway + var.create_er_gateway)}"
   name                 = "GatewaySubnet"
@@ -90,8 +97,7 @@ resource "azurerm_subnet" "hub-gw-sn" {
   address_prefix       = "${var.hub_gateway_subnet_address_space}"
 }
 
-### VPN Gateway ###
-
+#Create Hub VPN Gateway Public IP
 resource "azurerm_public_ip" "hub-vpn-gw-pip" {
   count               = "${signum(var.create_vpn_gateway)}"
   name                = "${azurerm_virtual_network.hub-net.name}-vpn-gw-pip"
@@ -106,6 +112,7 @@ resource "azurerm_public_ip" "hub-vpn-gw-pip" {
   }
 }
 
+#Create Hub VPN Gateway
 resource "azurerm_virtual_network_gateway" "hub-vpn-gw" {
   count               = "${signum(var.create_vpn_gateway)}"
   name                = "${azurerm_virtual_network.hub-net.name}-vpn-gw"
@@ -139,6 +146,7 @@ resource "azurerm_virtual_network_gateway" "hub-vpn-gw" {
   ]
 }
 
+#Create Hub Local Gateway
 resource "azurerm_local_network_gateway" "hub-local-gw" {
   count               = "${signum(var.create_vpn_gateway)}"
   name                = "${var.hub_local_gateway_name}"
@@ -159,6 +167,7 @@ resource "azurerm_local_network_gateway" "hub-local-gw" {
   }
 }
 
+#Create Hub Local Gateway Connection
 resource "azurerm_virtual_network_gateway_connection" "hub-local-gw-connection" {
   count                      = "${signum(var.create_vpn_gateway)}"
   name                       = "${var.hub_vpn_connection_name}"
@@ -177,6 +186,7 @@ resource "azurerm_virtual_network_gateway_connection" "hub-local-gw-connection" 
   }
 }
 
+#Create Hub VPN Gateway Lock
 resource "azurerm_management_lock" "hub-vpn-gw-lock" {
   count      = "${signum(var.create_vpn_gateway)}"
   name       = "${element(azurerm_virtual_network_gateway.hub-vpn-gw.*.name, count.index)}-lock"
@@ -185,8 +195,7 @@ resource "azurerm_management_lock" "hub-vpn-gw-lock" {
   notes      = "Prevent deletion of VPN Gateway."
 }
 
-### ExpressRoute Gateway ###
-
+#Create Hub ExpressRoute Gateway Public IP
 resource "azurerm_public_ip" "hub-er-gw-pip" {
   count               = "${signum(var.create_er_gateway)}"
   name                = "${azurerm_virtual_network.hub-net.name}-er-gw-pip"
@@ -201,6 +210,7 @@ resource "azurerm_public_ip" "hub-er-gw-pip" {
   }
 }
 
+#Create Hub ExpressRoute Gateway
 resource "azurerm_virtual_network_gateway" "hub-er-gw" {
   count               = "${signum(var.create_er_gateway)}"
   name                = "${azurerm_virtual_network.hub-net.name}-er-gw"
@@ -228,6 +238,7 @@ resource "azurerm_virtual_network_gateway" "hub-er-gw" {
   ]
 }
 
+#Create Hub ExpressRoute Circuit
 resource "azurerm_express_route_circuit" "hub-er-circuit" {
   count                 = "${signum(var.create_er_gateway)}"
   name                  = "${azurerm_virtual_network.hub-net.name}-er-circuit-1"
@@ -249,6 +260,7 @@ resource "azurerm_express_route_circuit" "hub-er-circuit" {
   }
 }
 
+#Create Hub ExpressRoute Gateway Lock
 resource "azurerm_management_lock" "hub-er-gw-lock" {
   count      = "${signum(var.create_er_gateway)}"
   name       = "${azurerm_virtual_network_gateway.hub-er-gw.name}-lock"
