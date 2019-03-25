@@ -146,6 +146,7 @@ resource "azurerm_virtual_machine" "vm" {
   ]
 }
 
+# Create DevOps Agent Script File
 data "template_file" "cloudconfig" {
   template = "${file("${path.module}/InstallDevopsAgent.sh")}"
 

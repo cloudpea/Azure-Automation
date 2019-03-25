@@ -1,3 +1,4 @@
+# Create Automation Account
 resource "azurerm_automation_account" "automation_account" {
   name                = "${var.automation_account_name}"
   location            = "${var.location}"
@@ -8,6 +9,7 @@ resource "azurerm_automation_account" "automation_account" {
   }
 }
 
+# Create Automation Account Runbook
 resource "azurerm_automation_runbook" "runbook" {
   name                = "${var.rubook_name}"
   location            = "${var.location}"
@@ -22,6 +24,7 @@ resource "azurerm_automation_runbook" "runbook" {
   }
 }
 
+# Create Automation Account Schedule
 resource "azurerm_automation_schedule" "runbook_schedule" {
   name                    = "${var.schedule_name}"
   resource_group_name     = "${var.resource_group_name}"
@@ -32,9 +35,12 @@ resource "azurerm_automation_schedule" "runbook_schedule" {
   start_time              = "${var.schedule_start_date}T${var.schedule_start_time}+00:00"
 }
 
+# Create Job Schedule ARM Template
 data "template_file" "jobschedule" {
   template = "${file("${path.module}/jobschedule.deploy.json")}"
 }
+
+# Create Backup Runbook Job
 
 resource "azurerm_template_deployment" "job_schedule" {
   name                = "job_schedule"
