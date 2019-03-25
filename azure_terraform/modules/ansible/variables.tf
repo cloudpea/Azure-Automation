@@ -10,5 +10,6 @@ variable "vm_username" {}
 variable "vm_password" {}
 variable "ansible_username" {}
 variable "ansible_git_url" {}
+variable "ansible_git_token" {}
 variable "corporate_ip" {}
 variable "subnet_id" {}

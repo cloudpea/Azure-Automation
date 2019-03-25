@@ -21,25 +21,6 @@ resource "azurerm_management_lock" "resourcegroup_lock" {
   depends_on = ["azurerm_resource_group.resource_group"]
 }
 
-# Create Azure Availability Set
-resource "azurerm_availability_set" "av_set" {
-  name                         = "AV-${var.vm_name}"
-  location                     = "${var.location}"
-  resource_group_name          = "${var.resourcegroup_name}"
-  managed                      = true
-  platform_update_domain_count = 5
-  platform_fault_domain_count  = 3
-
-  tags {
-    Application = "${var.tag_application}"
-    Environment = "${var.tag_environment}"
-    Criticality = "${var.tag_criticality}"
-    Owner       = "${var.tag_owner}"
-  }
-
-  depends_on = ["azurerm_resource_group.resource_group"]
-}
-
 # Create Azure Network Security Group
 resource "azurerm_network_security_group" "nsg" {
   name                = "NSG-${var.vm_name}"
@@ -68,7 +49,7 @@ resource "azurerm_network_security_group" "nsg" {
   depends_on = ["azurerm_resource_group.resource_group"]
 }
 
-# Create Azure VM Network Interfaces
+# Create Azure VM Network Interface
 resource "azurerm_network_interface" "nic" {
   name                      = "NIC-${var.vm_name}"
   location                  = "${var.location}"
@@ -91,20 +72,19 @@ resource "azurerm_network_interface" "nic" {
   depends_on = ["azurerm_resource_group.resource_group"]
 }
 
-# Create Azure Virtual Machines
+# Create Azure Virtual Machine
 resource "azurerm_virtual_machine" "vm" {
   name                  = "${var.vm_name}"
   location              = "${var.location}"
   resource_group_name   = "${var.resourcegroup_name}"
-  availability_set_id   = "${azurerm_availability_set.av_set.id}"
   network_interface_ids = ["${azurerm_network_interface.nic.id}"]
   vm_size               = "${var.vm_size}"
 
   # Uncomment this line to delete the OS disk automatically when deleting the VM
-  delete_os_disk_on_termination = true
+  #delete_os_disk_on_termination = true
 
   # Uncomment this line to delete the data disks automatically when deleting the VM
-  delete_data_disks_on_termination = true
+  #delete_data_disks_on_termination = true
 
   storage_image_reference {
     publisher = "Canonical"
@@ -144,16 +124,13 @@ resource "azurerm_virtual_machine" "vm" {
   ]
 }
 
-data "template_file" "inventory_file" {
-  template = "${file("${path.module}/inventory_file")}"
-}
-
+# Create CloudInit Script
 data "template_file" "cloudconfig" {
   template = "${file("${path.module}/InstallAnsible.sh")}"
 
   vars {
-    ansible_username        = "${var.ansible_username}"
-    inventory_file_contents = "${data.template_file.inventory_file.rendered}"
-    ansible_git_url         = "${var.ansible_git_url}"
+    ansible_username  = "${var.ansible_username}"
+    ansible_git_url   = "${var.ansible_git_url}"
+    ansible_git_token = "${var.ansible_git_token}"
   }
 }
