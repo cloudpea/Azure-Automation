@@ -1,0 +1,95 @@
+{
+    "variables": {
+      "ssh_user": "admin",
+      "ssh_pass": "M!cros0ft2018",
+      "rgpacker": "{{env `ARM_MASTER_IMAGE_RG`}}",
+      "rgpackertemp": "{{env `ARM_RG_PACKER`}}",
+      "locpacker": "{{env `ARM_LOCATION`}}",
+      "vmpacker": "{{env `ARM_VMPACKER`}}",
+      "vmimagename": "{{env `ARM_IMAGE`}}",
+      "ostype": "{{env `ARM_OS_TYPE`}}",
+      "myPackerImage": "{{env `ARM_IMAGE_NAME`}}",
+      "imagepublisher": "{{env `ARM_IMAGE_PUBLISHER`}}",
+      "imageoffer": "{{env `ARM_IMAGE_OFFER`}}",
+      "imagesku": "{{env `ARM_IMAGE_SKU`}}",
+      "imageversion": "{{env `ARM_IMAGE_VERSION`}}",
+      "clientsecret": "{{env `ARM_CLIENT_SECRET`}}",
+      "clientid": "{{env `ARM_CLIENT_ID`}}",
+      "tenantid": "{{env `ARM_TENANT_ID`}}",
+      "subscriptionid": "{{env `ARM_SUBSCRIPTION_ID`}}",
+      "vnet": "{{env `ARM_VNET`}}",
+      "subnet": "{{env `ARM_SUBNET`}}",
+      "rgvnet": "{{env `ARM_RG_VNET`}}"
+    },
+    "builders": [
+      {
+        "type": "azure-arm",
+        "client_id": "{{user `clientid`}}",
+        "client_secret": "{{user `clientsecret`}}",
+        "tenant_id": "{{user `tenantid`}}",
+        "subscription_id": "{{user `subscriptionid`}}",
+        "temp_resource_group_name": "{{user `rgpackertemp`}}",
+        "managed_image_resource_group_name": "{{user `rgpacker`}}",
+        "managed_image_name": "{{user `myPackerImage`}}",
+        "managed_image_storage_account_type": "Premium_LRS",
+        "os_type": "{{user `ostype`}}",
+        "image_publisher": "{{user `imagepublisher`}}",
+        "image_offer": "{{user `imageoffer`}}",
+        "image_sku": "{{user `imagesku`}}",
+        "image_version": "{{user `imageversion`}}",
+        "ssh_pty": "true",
+        "azure_tags": {
+          "dept": "Engineering",
+          "task": "Image deployment"
+        },
+        "location": "{{user `locpacker`}}",
+        "vm_size": "Standard_F2s",
+        "temp_compute_name": "{{user `vmpacker`}}",
+        "virtual_network_name": "{{user `vnet`}}",
+        "virtual_network_subnet_name": "{{user `subnet`}}",
+        "virtual_network_resource_group_name": "{{user `rgvnet`}}"
+      }
+    ],
+    "provisioners": [
+      {
+        "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+        "script": "packer_scripts/base.sh",
+        "pause_before": "5s",
+        "type": "shell"
+      },
+      {
+        "destination": "/tmp/",
+        "source": "./toupload",
+        "type": "file"
+      },
+      {
+        "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+        "script": "packer_scripts/CIS1.sh",
+        "expect_disconnect": "true",
+        "pause_before": "5s",
+        "type": "shell"
+      },
+      {
+        "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+        "script": "packer_scripts/end.sh",
+        "pause_before": "30s",
+        "type": "shell"
+      },
+      {
+        "execute_command": "echo '{{user `ssh_pass`}}' | {{ .Vars }} sudo -S -E sh '{{ .Path }}'",
+        "inline": [
+          "blkid",
+          "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+        ],
+        "inline_shebang": "/bin/sh -x",
+        "type": "shell",
+        "skip_clean": true
+      },
+      {
+        "execute_command": ["bash", "-c", "{{.Vars}} {{.Script}}"],
+        "script": "packer_scripts/local.sh",
+        "pause_before": "5s",
+        "type": "shell-local"
+      }
+    ]
+  }

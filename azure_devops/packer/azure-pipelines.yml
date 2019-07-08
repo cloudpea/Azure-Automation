@@ -1,0 +1,75 @@
+trigger: none
+schedules:
+- cron: 0 7 * * 1-5
+  displayName: Updates Schedule
+  branches:
+    include: [ master ]
+  always: "false"
+
+- cron: 0 7 * * 6
+  displayName: Mandatory Schedule
+  branches:
+    include: [ master ]
+  always: "true"
+
+variables:
+- group: Image Hardening
+
+jobs:
+- job: Packer
+  displayName: Image Hardening
+  timeoutInMinutes: 120
+
+  pool:
+    name: HardenedImages
+
+  steps:
+  - script: |
+     # Set Variables
+     export ARM_TENANT_ID=$(TEN_ID)
+     export ARM_SUBSCRIPTION_ID=$(SUB_ID)
+     export ARM_CLIENT_ID=$(CLIENT_ID)
+     export ARM_CLIENT_SECRET=$(CLIENT_SECRET)
+     export ARM_LOCATION=$(LOCATION)
+
+     # Login to Azure
+     echo "Logging in to Azure..."
+     az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID -o table | grep True
+     az account set --subscription $ARM_SUBSCRIPTION_ID
+     echo ""
+
+     # Start Packer Build
+     echo "Starting build"
+     sh ./azure_scripts/build.sh
+     echo "Build Complete"
+    displayName: 'Run Image Build'
+
+- job: Cleanup
+  displayName: Cleanup On Failure
+  timeoutInMinutes: 30
+  dependsOn: Packer
+  condition: always()
+
+  pool: 
+    name: HardenedImages
+  
+  steps:
+  - script: |
+     # Set Variables
+     export ARM_TENANT_ID=$(TEN_ID)
+     export ARM_SUBSCRIPTION_ID=$(SUB_ID)
+     export ARM_CLIENT_ID=$(CLIENT_ID)
+     export ARM_CLIENT_SECRET=$(CLIENT_SECRET)
+     export ARM_LOCATION=$(LOCATION)
+
+     # Login to Azure
+     echo "Logging in to Azure..."
+     az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID -o table | grep True
+     az account set --subscription $ARM_SUBSCRIPTION_ID
+     echo ""
+
+     # Delete Packer Resource Group
+     echo "Deleting Packer Resource Group"
+     az group delete --name $PACKER_RESOURCE_GROUP --yes
+     echo "Deleted Packer Resource Group"     
+    displayName: 'Packer Cleanup'
